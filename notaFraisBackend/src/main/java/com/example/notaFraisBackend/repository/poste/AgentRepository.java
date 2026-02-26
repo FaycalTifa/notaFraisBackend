@@ -1,6 +1,6 @@
-package com.example.notaFraisBackend.repository;
+package com.example.notaFraisBackend.repository.poste;
 
-import com.example.notaFraisBackend.entities.Agent;
+import com.example.notaFraisBackend.entities.poste.Agent;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

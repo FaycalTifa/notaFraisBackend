@@ -13,7 +13,7 @@ public class NotaFraisBackendApplication {
 		SpringApplication.run(NotaFraisBackendApplication.class, args);
 	}
 
-    @Bean
+/*    @Bean
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {
             @Override
@@ -25,7 +25,7 @@ public class NotaFraisBackendApplication {
                         .allowCredentials(true);
             }
         };
-    }
+    }*/
 
 
 }

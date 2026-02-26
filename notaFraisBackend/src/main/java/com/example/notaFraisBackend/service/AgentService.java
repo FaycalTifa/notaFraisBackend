@@ -1,10 +1,10 @@
 package com.example.notaFraisBackend.service;
 
 
-import com.example.notaFraisBackend.entities.Agent;
-import com.example.notaFraisBackend.entities.Section;
-import com.example.notaFraisBackend.repository.AgentRepository;
-import com.example.notaFraisBackend.repository.SectionRepository;
+import com.example.notaFraisBackend.entities.poste.Agent;
+import com.example.notaFraisBackend.entities.poste.Section;
+import com.example.notaFraisBackend.repository.poste.AgentRepository;
+import com.example.notaFraisBackend.repository.poste.SectionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +15,7 @@ import java.util.List;
 @Service
 public class AgentService {
 
-    @Autowired
+   /* @Autowired
     private AgentRepository agentRepository;
  @Autowired
     private SectionRepository sectionRepository;
@@ -74,5 +74,5 @@ public class AgentService {
         Agent existingAgent = findById(id);
         existingAgent.setDeleted(true);
         return agentRepository.save(existingAgent);
-    }
+    }*/
 }

@@ -1,4 +1,5 @@
-package com.example.notaFraisBackend.entities;
+package com.example.notaFraisBackend.entities.poste;
+
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
@@ -7,14 +8,14 @@ import lombok.*;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "Direction")
+@Table(name = "Agent")
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
 @Setter
 @Getter
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-public class Direction implements Serializable {
+public class Agent implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,6 +26,16 @@ public class Direction implements Serializable {
     private String libelle;
     @Column(name = "isDeleted")
     private boolean isDeleted = false;
+
+    // Relation Many-to-One avec Section
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "section_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "agents"}) // ← Modifié
+    private Section section;
+
+    // Champ transient pour recevoir l'ID depuis le frontend
+    @Transient
+    private Long sectionId;
 
     public Long getId() {
         return id;
@@ -46,6 +57,14 @@ public class Direction implements Serializable {
         return libelle;
     }
 
+    public Long getSectionId() {
+        return sectionId;
+    }
+
+    public void setSectionId(Long sectionId) {
+        this.sectionId = sectionId;
+    }
+
     public void setLibelle(String libelle) {
         this.libelle = libelle;
     }
@@ -58,13 +77,22 @@ public class Direction implements Serializable {
         isDeleted = deleted;
     }
 
+    public Section getSection() {
+        return section;
+    }
+
+    public void setSection(Section section) {
+        this.section = section;
+    }
+
     @Override
     public String toString() {
-        return "Direction{" +
+        return "Agent{" +
                 "id=" + id +
                 ", code='" + code + '\'' +
                 ", libelle='" + libelle + '\'' +
                 ", isDeleted=" + isDeleted +
+                ", section=" + section +
                 '}';
     }
 }

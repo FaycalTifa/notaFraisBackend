@@ -1,15 +1,12 @@
 package com.example.notaFraisBackend.resource;
 
 
-import com.example.notaFraisBackend.entities.Direction;
-import com.example.notaFraisBackend.entities.Section;
-import com.example.notaFraisBackend.entities.ServiceEntite;
+import com.example.notaFraisBackend.dto.ancien.SectionDTO;
 import com.example.notaFraisBackend.service.SectionService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,72 +19,46 @@ public class SectionResource {
     @Autowired
     private SectionService sectionService;
 
-    private static final Logger logger = LoggerFactory.getLogger(SectionService.class);
-    private Long serviceId;
-
-
-    @PostMapping
-    public ResponseEntity<Section> createSection(@RequestBody Section section) {
-        try {
-            System.out.println("======== PostMapping Section =========" + section);
-            Section savedSection = sectionService.save(section);
-            return ResponseEntity.status(HttpStatus.CREATED).body(savedSection);
-        } catch (Exception e) {
-            logger.error("Erreur création Section: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
-    }
-
     @GetMapping
-    public ResponseEntity<List<Section>> getAllSections() {
-        List<Section> sections = sectionService.findAll();
-        return ResponseEntity.ok(sections);
+    public ResponseEntity<List<SectionDTO>> getAllSections() {
+        return ResponseEntity.ok(sectionService.getAllSections());
     }
-
-
 
     @GetMapping("/{id}")
-    public ResponseEntity<Section> getSectionById(@PathVariable Long id) {
-        try {
-            Section section = sectionService.findById(id);
-            return ResponseEntity.ok(section);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<SectionDTO> getSectionById(@PathVariable Long id) {
+        return ResponseEntity.ok(sectionService.getSectionById(id));
+    }
+
+    @GetMapping("/service/{serviceId}")
+    public ResponseEntity<List<SectionDTO>> getSectionsByService(@PathVariable Long serviceId) {
+        return ResponseEntity.ok(sectionService.getSectionsByService(serviceId));
+    }
+
+    @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTEUR', 'CHEF_SERVICE')")
+    public ResponseEntity<SectionDTO> createSection(@RequestBody SectionDTO sectionDTO) {
+        SectionDTO createdSection = sectionService.createSection(sectionDTO);
+        return new ResponseEntity<>(createdSection, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Section> updateSection(@PathVariable Long id, @RequestBody Section sectionDetails) {
-        try {
-            Section updatedSection = sectionService.update(id, sectionDetails);
-            return ResponseEntity.ok(updatedSection);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        }
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTEUR', 'CHEF_SERVICE')")
+    public ResponseEntity<SectionDTO> updateSection(@PathVariable Long id, @RequestBody SectionDTO sectionDTO) {
+        SectionDTO updatedSection = sectionService.updateSection(id, sectionDTO);
+        return ResponseEntity.ok(updatedSection);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTEUR')")
     public ResponseEntity<Void> deleteSection(@PathVariable Long id) {
-        try {
-            sectionService.delete(id);
-            return ResponseEntity.noContent().build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        }
+        sectionService.deleteSection(id);
+        return ResponseEntity.noContent().build();
     }
 
-
- /*   @GetMapping("/service/{serviceId}")
-    public ResponseEntity<List<Section>> getSectionsByService(@PathVariable Long serviceI) {
-        this.serviceId = serviceId;
-        List<Section> sections = sectionService.findByServiceId(serviceId);
-        return ResponseEntity.ok(sections);
-    }*/
-
-    @GetMapping("/service/{serviceId}")
-    public ResponseEntity<List<Section>> getSectionsByService(@PathVariable Long serviceId) {
-        this.serviceId = serviceId;
-        List<Section> sections = sectionService.findByServiceId(serviceId);
-        return ResponseEntity.ok(sections);
+    @PostMapping("/{sectionId}/chef/{chefId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTEUR', 'CHEF_SERVICE')")
+    public ResponseEntity<SectionDTO> assignerChefSection(@PathVariable Long sectionId, @PathVariable Long chefId) {
+        SectionDTO updatedSection = sectionService.assignerChefSection(sectionId, chefId);
+        return ResponseEntity.ok(updatedSection);
     }
 }

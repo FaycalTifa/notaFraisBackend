@@ -1,5 +1,9 @@
 package com.example.notaFraisBackend.entities;
 
+import com.example.notaFraisBackend.entities.poste.Agent;
+import com.example.notaFraisBackend.entities.poste.Direction;
+import com.example.notaFraisBackend.entities.poste.Section;
+import com.example.notaFraisBackend.entities.poste.ServiceEntite;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;

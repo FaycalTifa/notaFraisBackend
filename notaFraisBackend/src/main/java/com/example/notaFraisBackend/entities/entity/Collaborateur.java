@@ -8,6 +8,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
+
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -16,7 +18,7 @@ import java.util.List;
 @Entity
 @Table(name = "Collaborateur")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-public class Collaborateur {
+public class Collaborateur implements Serializable {
 
 
     @Id
@@ -62,20 +64,32 @@ public class Collaborateur {
     @Column(nullable = false)
     private boolean actif = true;
 
+    @Column(name = "signature",  columnDefinition = "TEXT") // Augmenter la taille
+    private String signature;
+
+    @Column(name = "signature_filename", length = 255)
+    private String signatureFilename;
+
+    @Column(name = "signature_content_type", length = 100)
+    private String signatureContentType;
+
     // Relations organisationnelles
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "direction_id")
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "collaborateurs", "services"})
+    @JsonIgnore
     private Direction direction;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "service_id")
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "collaborateurs", "sections", "direction"})
+    @JsonIgnore
     private ServiceEntite service;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "section_id")
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "collaborateurs", "service"})
+    @JsonIgnore
     private Section section;
 
     // Relations hiérarchiques
@@ -105,6 +119,18 @@ public class Collaborateur {
     @OneToMany(mappedBy = "evaluateur", fetch = FetchType.LAZY)
     @JsonIgnore
     private List<Evaluation> evaluationsRealisees = new ArrayList<>();
+
+
+
+    // Getters et Setters
+    public String getSignature() { return signature; }
+    public void setSignature(String signature) { this.signature = signature; }
+
+    public String getSignatureFilename() { return signatureFilename; }
+    public void setSignatureFilename(String signatureFilename) { this.signatureFilename = signatureFilename; }
+
+    public String getSignatureContentType() { return signatureContentType; }
+    public void setSignatureContentType(String signatureContentType) { this.signatureContentType = signatureContentType; }
 
     // Constructeurs
     public Collaborateur() {}

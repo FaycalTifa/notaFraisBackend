@@ -58,6 +58,9 @@ public class AuthService {
                 .orElse(null);
     }
 
+    // ✅ NOUVELLE MÉTHODE À AJOUTER ICI
+
+
     public void changePassword(String currentPassword, String newPassword) {
         Collaborateur currentUser = getCurrentUser();
         if (currentUser == null) {
@@ -70,6 +73,45 @@ public class AuthService {
 
         currentUser.setPassword(passwordEncoder.encode(newPassword));
         collaborateurRepository.save(currentUser);
+    }
+
+    // Dans AuthService.java
+    public Map<String, Object> getCurrentUserInfo() {
+        Collaborateur user = getCurrentUser();
+        if (user == null) {
+            return null;
+        }
+
+        Map<String, Object> userInfo = new HashMap<>();
+        userInfo.put("id", user.getId());
+        userInfo.put("nom", user.getNom());
+        userInfo.put("prenoms", user.getPrenoms());
+        userInfo.put("nomComplet", user.getNomComplet());
+        userInfo.put("email", user.getEmail());
+        userInfo.put("role", user.getRole());
+        userInfo.put("actif", user.isActif());
+        userInfo.put("matricule", user.getMatricule());
+        userInfo.put("posteActuel", user.getPosteActuel());
+
+        // AJOUTER LES INFORMATIONS DE DIRECTION
+        if (user.getDirection() != null) {
+            userInfo.put("directionId", user.getDirection().getId());
+            userInfo.put("directionNom", user.getDirection().getNom());
+        }
+
+        // AJOUTER LES INFORMATIONS DE SERVICE
+        if (user.getService() != null) {
+            userInfo.put("serviceId", user.getService().getId());
+            userInfo.put("serviceNom", user.getService().getNom());
+        }
+
+        // AJOUTER LES INFORMATIONS DE SECTION
+        if (user.getSection() != null) {
+            userInfo.put("sectionId", user.getSection().getId());
+            userInfo.put("sectionNom", user.getSection().getNom());
+        }
+
+        return userInfo;
     }
 
     public List<Map<String, Object>> getAllUsers() {

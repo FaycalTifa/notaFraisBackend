@@ -1,8 +1,9 @@
 package com.example.notaFraisBackend.dto;
 
 import javax.validation.constraints.NotBlank;
+import java.io.Serializable;
 
-public class LoginRequestDTO {
+public class LoginRequestDTO implements Serializable {
     @NotBlank(message = "L'email est obligatoire")
     private String email;
 

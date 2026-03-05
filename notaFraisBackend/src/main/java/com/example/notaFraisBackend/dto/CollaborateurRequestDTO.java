@@ -3,9 +3,10 @@ package com.example.notaFraisBackend.dto;
 import com.example.notaFraisBackend.entities.enume.Role;
 
 import javax.validation.constraints.*;
+import java.io.Serializable;
 import java.time.LocalDate;
 
-public class CollaborateurRequestDTO {
+public class CollaborateurRequestDTO implements Serializable {
 
     @NotBlank(message = "Le nom est obligatoire")
     @Size(min = 2, max = 50, message = "Le nom doit contenir entre 2 et 50 caractères")
@@ -42,7 +43,39 @@ public class CollaborateurRequestDTO {
     private Long sectionId;
     private Long responsableDirectId;
 
+    // NOUVEAU CHAMP POUR LA SIGNATURE
+    private String signature;
+
+    private String signatureFilename;
+    private String signatureContentType;
+
     // Getters et Setters
+
+
+    public String getSignature() {
+        return signature;
+    }
+
+    public void setSignature(String signature) {
+        this.signature = signature;
+    }
+
+    public String getSignatureFilename() {
+        return signatureFilename;
+    }
+
+    public void setSignatureFilename(String signatureFilename) {
+        this.signatureFilename = signatureFilename;
+    }
+
+    public String getSignatureContentType() {
+        return signatureContentType;
+    }
+
+    public void setSignatureContentType(String signatureContentType) {
+        this.signatureContentType = signatureContentType;
+    }
+
     public String getNom() { return nom; }
     public void setNom(String nom) { this.nom = nom; }
 

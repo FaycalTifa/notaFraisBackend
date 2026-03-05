@@ -41,9 +41,9 @@ public class EvaluationService {
     @Autowired
     private CollaborateurRepository collaborateurRepository;
 
-
-
-    // Récupérer l'utilisateur connecté
+    // =============================================
+    // MÉTHODES PRIVÉES
+    // =============================================
     private Collaborateur getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -53,35 +53,24 @@ public class EvaluationService {
 
         Object principal = authentication.getPrincipal();
 
-        // Si le principal est un UserDetails (Spring Security)
         if (principal instanceof org.springframework.security.core.userdetails.User) {
             org.springframework.security.core.userdetails.User user =
                     (org.springframework.security.core.userdetails.User) principal;
             return collaborateurRepository.findByEmail(user.getUsername())
                     .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé avec l'email: " + user.getUsername()));
-        }
-
-        // Si le principal est une chaîne (email)
-        if (principal instanceof String) {
+        } else if (principal instanceof String) {
             String email = (String) principal;
             return collaborateurRepository.findByEmail(email)
                     .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé avec l'email: " + email));
-        }
-
-        // Si le principal est un CustomUserDetails (selon votre implémentation)
-        if (principal instanceof CustomUserDetails) {
+        } else if (principal instanceof CustomUserDetails) {
             CustomUserDetails userDetails = (CustomUserDetails) principal;
             return collaborateurRepository.findById(userDetails.getId())
                     .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé avec l'id: " + userDetails.getId()));
         }
 
-        // Log pour déboguer
-        System.out.println("Type de principal: " + principal.getClass().getName());
-        System.out.println("Principal: " + principal);
-
         throw new RuntimeException("Type de principal non supporté: " + principal.getClass().getName());
     }
-    // Vérifier si l'utilisateur peut évaluer ce collaborateur
+
     private boolean canEvaluate(Collaborateur evaluateur, Collaborateur collaborateur) {
         if (evaluateur.getRole().toString().equals("ADMIN")) return true;
         if (evaluateur.getRole().toString().equals("DIRECTEUR")) {
@@ -99,7 +88,9 @@ public class EvaluationService {
         return false;
     }
 
-    // Convertir Evaluation en DTO
+    // =============================================
+    // CONVERSION EN DTO
+    // =============================================
     private EvaluationDTO convertToDTO(Evaluation evaluation) {
         EvaluationDTO dto = new EvaluationDTO();
         dto.setId(evaluation.getId());
@@ -108,17 +99,67 @@ public class EvaluationService {
         dto.setDateEntretien(evaluation.getDateEntretien());
         dto.setDateValidation(evaluation.getDateValidation());
         dto.setStatut(evaluation.getStatut());
+        dto.setDateEntretien(evaluation.getDateEntretien());
 
+        // Collaborateur
         if (evaluation.getCollaborateur() != null) {
+            CollaborateurDTO collabDTO = new CollaborateurDTO();
+            collabDTO.setId(evaluation.getCollaborateur().getId());
+            collabDTO.setNom(evaluation.getCollaborateur().getNom());
+            collabDTO.setPrenoms(evaluation.getCollaborateur().getPrenoms());
+            collabDTO.setNomComplet(evaluation.getCollaborateur().getNomComplet());
+            collabDTO.setMatricule(evaluation.getCollaborateur().getMatricule());
+            collabDTO.setPosteActuel(evaluation.getCollaborateur().getPosteActuel());
+            collabDTO.setRole(evaluation.getCollaborateur().getRole());
+
+            if (evaluation.getCollaborateur().getDirection() != null) {
+                collabDTO.setDirectionId(evaluation.getCollaborateur().getDirection().getId());
+                collabDTO.setDirectionNom(evaluation.getCollaborateur().getDirection().getNom());
+            }
+            if (evaluation.getCollaborateur().getService() != null) {
+                collabDTO.setServiceId(evaluation.getCollaborateur().getService().getId());
+                collabDTO.setServiceNom(evaluation.getCollaborateur().getService().getNom());
+            }
+            if (evaluation.getCollaborateur().getSection() != null) {
+                collabDTO.setSectionId(evaluation.getCollaborateur().getSection().getId());
+                collabDTO.setSectionNom(evaluation.getCollaborateur().getSection().getNom());
+            }
+
+            dto.setCollaborateur(collabDTO);
             dto.setCollaborateurId(evaluation.getCollaborateur().getId());
             dto.setCollaborateurNom(evaluation.getCollaborateur().getNomComplet());
         }
+
+        // Évaluateur
         if (evaluation.getEvaluateur() != null) {
+            CollaborateurDTO evalDTO = new CollaborateurDTO();
+            evalDTO.setId(evaluation.getEvaluateur().getId());
+            evalDTO.setNom(evaluation.getEvaluateur().getNom());
+            evalDTO.setPrenoms(evaluation.getEvaluateur().getPrenoms());
+            evalDTO.setNomComplet(evaluation.getEvaluateur().getNomComplet());
+            evalDTO.setMatricule(evaluation.getEvaluateur().getMatricule());
+            evalDTO.setPosteActuel(evaluation.getEvaluateur().getPosteActuel());
+            evalDTO.setRole(evaluation.getEvaluateur().getRole());
+
+            if (evaluation.getEvaluateur().getDirection() != null) {
+                evalDTO.setDirectionId(evaluation.getEvaluateur().getDirection().getId());
+                evalDTO.setDirectionNom(evaluation.getEvaluateur().getDirection().getNom());
+            }
+            if (evaluation.getEvaluateur().getService() != null) {
+                evalDTO.setServiceId(evaluation.getEvaluateur().getService().getId());
+                evalDTO.setServiceNom(evaluation.getEvaluateur().getService().getNom());
+            }
+            if (evaluation.getEvaluateur().getSection() != null) {
+                evalDTO.setSectionId(evaluation.getEvaluateur().getSection().getId());
+                evalDTO.setSectionNom(evaluation.getEvaluateur().getSection().getNom());
+            }
+
+            dto.setEvaluateur(evalDTO);
             dto.setEvaluateurId(evaluation.getEvaluateur().getId());
             dto.setEvaluateurNom(evaluation.getEvaluateur().getNomComplet());
         }
 
-        dto.setFaitsMarquants(evaluation.getFaitsMarquants());
+
 
         // Objectifs
         if (evaluation.getObjectifs() != null) {
@@ -126,8 +167,7 @@ public class EvaluationService {
                     .map(this::convertObjectifToDTO)
                     .collect(Collectors.toList()));
         }
-        dto.setNoteGlobaleObjectifs(evaluation.getNoteGlobaleObjectifs() != null ?
-                evaluation.getNoteGlobaleObjectifs().doubleValue() : null);
+        dto.setNoteGlobaleObjectifs(evaluation.getNoteGlobaleObjectifs());
 
         // Tenue du poste
         dto.setRespectEngagements(evaluation.getRespectEngagements());
@@ -166,7 +206,13 @@ public class EvaluationService {
                     .collect(Collectors.toList()));
         }
 
-        // Commentaires
+if (evaluation.getFaitsMarquants() != null) {
+            dto.setFaitsMarquants(evaluation.getFaitsMarquants().stream()
+                    .map(this::convertFaitMarquantToDTO)
+                    .collect(Collectors.toList()));
+        }
+
+        // Commentaires et notes
         dto.setNoteGlobaleFinale(evaluation.getNoteGlobaleFinale());
         dto.setCommentaireResponsable(evaluation.getCommentaireResponsable());
         dto.setCommentaireCollaborateur(evaluation.getCommentaireCollaborateur());
@@ -212,20 +258,36 @@ public class EvaluationService {
         return dto;
     }
 
-    // Créer une nouvelle évaluation
+
+    private FaitMarquantDTO convertFaitMarquantToDTO(FaitMarquant fait) {
+        FaitMarquantDTO dto = new FaitMarquantDTO();
+        dto.setType(fait.getType());
+        dto.setDescription(fait.getDescription());
+        dto.setDateEvenement(fait.getDateEvenement());
+        return dto;
+    }
+
+    private FaitMarquant convertDTOToFaitMarquant(FaitMarquantDTO dto, Evaluation evaluation) {
+        FaitMarquant fait = new FaitMarquant();
+        fait.setType(dto.getType());
+        fait.setDescription(dto.getDescription());
+        fait.setDateEvenement(dto.getDateEvenement());
+        fait.setEvaluation(evaluation);
+        return fait;
+    }
+    // =============================================
+    // CRÉATION
+    // =============================================
     @Transactional
     public EvaluationDTO createEvaluation(EvaluationRequestDTO request) {
         Collaborateur currentUser = getCurrentUser();
-
         Collaborateur collaborateur = collaborateurRepository.findById(request.getCollaborateurId())
                 .orElseThrow(() -> new ResourceNotFoundException("Collaborateur non trouvé"));
 
-        // Vérifier les droits
         if (!canEvaluate(currentUser, collaborateur)) {
             throw new UnauthorizedException("Vous n'avez pas le droit d'évaluer ce collaborateur");
         }
 
-        // Vérifier si une évaluation existe déjà pour cette année
         if (evaluationRepository.existsByCollaborateurIdAndAnnee(collaborateur.getId(), request.getAnnee())) {
             throw new BadRequestException("Une évaluation existe déjà pour ce collaborateur en " + request.getAnnee());
         }
@@ -238,119 +300,148 @@ public class EvaluationService {
         evaluation.setCollaborateur(collaborateur);
         evaluation.setEvaluateur(currentUser);
 
-        // Faits marquants
+        // Gestion des faits marquants
         if (request.getFaitsMarquants() != null) {
-            evaluation.setFaitsMarquants(request.getFaitsMarquants());
-        }
+            // Supprimer les anciens
+            evaluation.getFaitsMarquants().clear();
 
-        // Sauvegarder l'évaluation
-        Evaluation savedEvaluation = evaluationRepository.save(evaluation);
-
-        // Ajouter les objectifs si présents
-        if (request.getObjectifs() != null) {
-            for (ObjectifEvaluationDTO objDTO : request.getObjectifs()) {
-                ObjectifEvaluation objectif = new ObjectifEvaluation();
-                objectif.setLibelle(objDTO.getLibelle());
-                objectif.setCotation(objDTO.getCotation());
-                objectif.setTauxAtteinte(objDTO.getTauxAtteinte());
-                objectif.setAppreciationCollaborateur(objDTO.getAppreciationCollaborateur());
-                objectif.setAppreciationResponsable(objDTO.getAppreciationResponsable());
-                objectif.setEvaluation(savedEvaluation);
-                objectifRepository.save(objectif);
-                savedEvaluation.getObjectifs().add(objectif);
+            // Ajouter les nouveaux
+            for (FaitMarquantDTO fmDTO : request.getFaitsMarquants()) {
+                FaitMarquant fait = convertDTOToFaitMarquant(fmDTO, evaluation);
+                evaluation.getFaitsMarquants().add(fait);
             }
         }
-System.out.println("----------------------savedEvaluation-------------------------------");
-System.out.println(savedEvaluation);
-System.out.println("-----------------------savedEvaluation------------------------------");
+        Evaluation savedEvaluation = evaluationRepository.save(evaluation);
+
+        // Ajouter les objectifs
+        if (request.getObjectifs() != null) {
+            for (ObjectifEvaluationDTO objDTO : request.getObjectifs()) {
+                if (objDTO.getLibelle() != null && !objDTO.getLibelle().trim().isEmpty()) {
+                    ObjectifEvaluation objectif = new ObjectifEvaluation();
+                    objectif.setLibelle(objDTO.getLibelle());
+                    objectif.setCotation(objDTO.getCotation());
+                    objectif.setTauxAtteinte(objDTO.getTauxAtteinte());
+                    objectif.setAppreciationCollaborateur(objDTO.getAppreciationCollaborateur());
+                    objectif.setAppreciationResponsable(objDTO.getAppreciationResponsable());
+                    objectif.setEvaluation(savedEvaluation);
+                    objectifRepository.save(objectif);
+                    savedEvaluation.getObjectifs().add(objectif);
+                }
+            }
+        }
+
         return convertToDTO(savedEvaluation);
     }
 
-    // Mettre à jour une évaluation
-    // Mettre à jour une évaluation
-// Mettre à jour une évaluation
-/*    @Transactional
+    // =============================================
+    // MISE À JOUR COMPLÈTE ET CORRIGÉE
+    // =============================================
+    @Transactional
     public EvaluationDTO updateEvaluation(Long id, EvaluationRequestDTO request) {
-        Evaluation evaluation = evaluationRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Évaluation non trouvée"));
+        // LOGS DE DÉBOGAGE
+        System.out.println("========== UPDATE EVALUATION ==========");
+        System.out.println("ID: " + id);
+        System.out.println("Données reçues:");
+        System.out.println("  - Date entretien: " + request.getDateEntretien());
+        System.out.println("  - Respect engagements: " + request.getRespectEngagements());
+        System.out.println("  - Qualité méthodes: " + request.getQualiteMethodesTravail());
 
+        System.out.println("========== UPDATE EVALUATION ==========");
+        System.out.println("ID: " + id);
+
+        // Log de la tenue du poste
+        System.out.println("--- Tenue du poste ---");
+        System.out.println("respectEngagements: " + request.getRespectEngagements());
+        System.out.println("qualiteMethodesTravail: " + request.getQualiteMethodesTravail());
+        System.out.println("relationPresentation: " + request.getRelationPresentation());
+
+        // Log de la maîtrise
+        System.out.println("--- Maîtrise du poste ---");
+        System.out.println("niveauTechnique: " + request.getNiveauTechnique());
+        System.out.println("niveauExperience: " + request.getNiveauExperience());
+
+        if (request.getObjectifs() != null) {
+            System.out.println("  - Objectifs reçus: " + request.getObjectifs().size());
+            for (ObjectifEvaluationDTO obj : request.getObjectifs()) {
+                System.out.println("    * " + obj.getLibelle() + " (cotation: " + obj.getCotation() + ")");
+            }
+        } else {
+            System.out.println("  - Aucun objectif reçu");
+        }
+
+        // Récupérer l'évaluation existante
+        Evaluation evaluation = evaluationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Évaluation non trouvée avec l'id: " + id));
+
+        // Récupérer l'utilisateur connecté
         Collaborateur currentUser = getCurrentUser();
 
-        // Vérifier les droits (seul l'évaluateur ou admin peut modifier)
+        // Vérifier les droits de modification
         if (!currentUser.getId().equals(evaluation.getEvaluateur().getId()) &&
                 !currentUser.getRole().toString().equals("ADMIN")) {
             throw new UnauthorizedException("Vous n'avez pas le droit de modifier cette évaluation");
         }
 
-        // ========== Mise à jour des champs simples ==========
+        // ========== MISE À JOUR DES CHAMPS SIMPLES ==========
         if (request.getDateEntretien() != null) {
             evaluation.setDateEntretien(request.getDateEntretien());
         }
 
+        // Gestion des faits marquants
         if (request.getFaitsMarquants() != null) {
-            evaluation.setFaitsMarquants(request.getFaitsMarquants());
+            // Supprimer les anciens
+            evaluation.getFaitsMarquants().clear();
+
+            // Ajouter les nouveaux
+            for (FaitMarquantDTO fmDTO : request.getFaitsMarquants()) {
+                FaitMarquant fait = convertDTOToFaitMarquant(fmDTO, evaluation);
+                evaluation.getFaitsMarquants().add(fait);
+            }
         }
 
         // Tenue du poste
-        if (request.getRespectEngagements() != null) {
+        if (request.getRespectEngagements() != null)
             evaluation.setRespectEngagements(request.getRespectEngagements());
-        }
-        if (request.getQualiteMethodesTravail() != null) {
+        if (request.getQualiteMethodesTravail() != null)
             evaluation.setQualiteMethodesTravail(request.getQualiteMethodesTravail());
-        }
-        if (request.getCapacitesAdaptationOrganisation() != null) {
+        if (request.getCapacitesAdaptationOrganisation() != null)
             evaluation.setCapacitesAdaptationOrganisation(request.getCapacitesAdaptationOrganisation());
-        }
-        if (request.getEncadrement() != null) {
+        if (request.getEncadrement() != null)
             evaluation.setEncadrement(request.getEncadrement());
-        }
-        if (request.getEspritInitiativeInnovation() != null) {
+        if (request.getEspritInitiativeInnovation() != null)
             evaluation.setEspritInitiativeInnovation(request.getEspritInitiativeInnovation());
-        }
-        if (request.getRelationPresentation() != null) {
+        if (request.getRelationPresentation() != null)
             evaluation.setRelationPresentation(request.getRelationPresentation());
-        }
-        if (request.getPonctualite() != null) {
+        if (request.getPonctualite() != null)
             evaluation.setPonctualite(request.getPonctualite());
-        }
-        if (request.getRespectReglementInterieur() != null) {
+        if (request.getRespectReglementInterieur() != null)
             evaluation.setRespectReglementInterieur(request.getRespectReglementInterieur());
-        }
 
         // Maîtrise du poste
-        if (request.getNiveauTechnique() != null) {
+        if (request.getNiveauTechnique() != null)
             evaluation.setNiveauTechnique(NiveauMaitrise.valueOf(request.getNiveauTechnique()));
-        }
-        if (request.getNiveauExperience() != null) {
+        if (request.getNiveauExperience() != null)
             evaluation.setNiveauExperience(NiveauMaitrise.valueOf(request.getNiveauExperience()));
-        }
-        if (request.getNiveauEncadrement() != null) {
+        if (request.getNiveauEncadrement() != null)
             evaluation.setNiveauEncadrement(NiveauMaitrise.valueOf(request.getNiveauEncadrement()));
-        }
-        if (request.getCommentairesMaitrise() != null) {
+        if (request.getCommentairesMaitrise() != null)
             evaluation.setCommentairesMaitrise(request.getCommentairesMaitrise());
-        }
 
         // Commentaires
-        if (request.getCommentaireResponsable() != null) {
+        if (request.getCommentaireResponsable() != null)
             evaluation.setCommentaireResponsable(request.getCommentaireResponsable());
-        }
-        if (request.getCommentaireCollaborateur() != null) {
+        if (request.getCommentaireCollaborateur() != null)
             evaluation.setCommentaireCollaborateur(request.getCommentaireCollaborateur());
-        }
-        if (request.getCommentaireN2() != null) {
+        if (request.getCommentaireN2() != null)
             evaluation.setCommentaireN2(request.getCommentaireN2());
-        }
-        if (request.getCommentaireN3() != null) {
+        if (request.getCommentaireN3() != null)
             evaluation.setCommentaireN3(request.getCommentaireN3());
-        }
 
         // ========== GESTION DES OBJECTIFS ==========
         if (request.getObjectifs() != null) {
+
             // Supprimer les anciens objectifs
             objectifRepository.deleteByEvaluationId(evaluation.getId());
-
-            // Vider la liste existante
             evaluation.getObjectifs().clear();
 
             // Ajouter les nouveaux objectifs
@@ -365,178 +456,9 @@ System.out.println("-----------------------savedEvaluation----------------------
                     objectif.setNiveauAtteinte(objDTO.getNiveauAtteinte());
                     objectif.setEvaluation(evaluation);
 
-                    objectifRepository.save(objectif);
-                    evaluation.getObjectifs().add(objectif);
-
-                    System.out.println("Objectif ajouté: " + objDTO.getLibelle() + " - Cotation: " + objDTO.getCotation());
-                }
-            }
-        }
-
-        // ========== GESTION DES OBJECTIFS FUTURS ==========
-        if (request.getObjectifsFuturs() != null) {
-            // Supprimer les anciens objectifs futurs
-            objectifFuturRepository.deleteByEvaluationId(evaluation.getId());
-
-            // Vider la liste existante
-            evaluation.getObjectifsFuturs().clear();
-
-            // Ajouter les nouveaux objectifs futurs
-            for (ObjectifFuturDTO objDTO : request.getObjectifsFuturs()) {
-                if (objDTO.getLibelle() != null && !objDTO.getLibelle().trim().isEmpty()) {
-                    ObjectifFutur objectif = new ObjectifFutur();
-                    objectif.setLibelle(objDTO.getLibelle());
-                    objectif.setPlanAction(objDTO.getPlanAction());
-                    objectif.setMoyens(objDTO.getMoyens());
-                    objectif.setIndicateursSuivi(objDTO.getIndicateursSuivi());
-                    objectif.setType(objDTO.getType());
-                    objectif.setEvaluation(evaluation);
-
-                    objectifFuturRepository.save(objectif);
-                    evaluation.getObjectifsFuturs().add(objectif);
-
-                    System.out.println("Objectif futur ajouté: " + objDTO.getLibelle());
-                }
-            }
-        }
-
-        // ========== GESTION DES FORMATIONS ==========
-        if (request.getSouhaitsFormations() != null) {
-            // Supprimer les anciennes formations
-            formationRepository.deleteByEvaluationId(evaluation.getId());
-
-            // Vider la liste existante
-            evaluation.getSouhaitsFormations().clear();
-
-            // Ajouter les nouvelles formations
-            for (SouhaitFormationDTO formDTO : request.getSouhaitsFormations()) {
-                if (formDTO.getTheme() != null && !formDTO.getTheme().trim().isEmpty()) {
-                    SouhaitFormation formation = new SouhaitFormation();
-                    formation.setTheme(formDTO.getTheme());
-                    formation.setObjectifs(formDTO.getObjectifs());
-                    formation.setResultatsAttendus(formDTO.getResultatsAttendus());
-                    formation.setDelaisEvaluation(formDTO.getDelaisEvaluation());
-                    formation.setEvaluation(evaluation);
-
-                    formationRepository.save(formation);
-                    evaluation.getSouhaitsFormations().add(formation);
-
-                    System.out.println("Formation ajoutée: " + formDTO.getTheme());
-                }
-            }
-        }
-
-        // ========== RECALCUL DES NOTES ==========
-        evaluation.calculerNotes();
-
-        // ========== LOGS DE VÉRIFICATION ==========
-        System.out.println("=== ÉVALUATION MISE À JOUR ===");
-        System.out.println("ID: " + evaluation.getId());
-        System.out.println("Nombre d'objectifs: " + (evaluation.getObjectifs() != null ? evaluation.getObjectifs().size() : 0));
-        System.out.println("Nombre d'objectifs futurs: " + (evaluation.getObjectifsFuturs() != null ? evaluation.getObjectifsFuturs().size() : 0));
-        System.out.println("Nombre de formations: " + (evaluation.getSouhaitsFormations() != null ? evaluation.getSouhaitsFormations().size() : 0));
-        System.out.println("Note objectifs: " + evaluation.getNoteGlobaleObjectifs());
-        System.out.println("Note tenue: " + evaluation.getNoteGlobaleTenuePoste());
-        System.out.println("Note finale: " + evaluation.getNoteGlobaleFinale());
-        System.out.println("==============================");
-
-        return convertToDTO(evaluationRepository.save(evaluation));
-    }*/
-    // Mettre à jour une évaluation
-    @Transactional
-    public EvaluationDTO updateEvaluation(Long id, EvaluationRequestDTO request) {
-        Evaluation evaluation = evaluationRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Évaluation non trouvée"));
-
-        Collaborateur currentUser = getCurrentUser();
-
-        // Vérifier les droits
-        if (!currentUser.getId().equals(evaluation.getEvaluateur().getId()) &&
-                !currentUser.getRole().toString().equals("ADMIN")) {
-            throw new UnauthorizedException("Vous n'avez pas le droit de modifier cette évaluation");
-        }
-
-        // ========== Mise à jour des champs ==========
-        if (request.getDateEntretien() != null) {
-            evaluation.setDateEntretien(request.getDateEntretien());
-        }
-
-        if (request.getFaitsMarquants() != null) {
-            evaluation.setFaitsMarquants(request.getFaitsMarquants());
-        }
-
-        // Tenue du poste
-        if (request.getRespectEngagements() != null) {
-            evaluation.setRespectEngagements(request.getRespectEngagements());
-        }
-        if (request.getQualiteMethodesTravail() != null) {
-            evaluation.setQualiteMethodesTravail(request.getQualiteMethodesTravail());
-        }
-        if (request.getCapacitesAdaptationOrganisation() != null) {
-            evaluation.setCapacitesAdaptationOrganisation(request.getCapacitesAdaptationOrganisation());
-        }
-        if (request.getEncadrement() != null) {
-            evaluation.setEncadrement(request.getEncadrement());
-        }
-        if (request.getEspritInitiativeInnovation() != null) {
-            evaluation.setEspritInitiativeInnovation(request.getEspritInitiativeInnovation());
-        }
-        if (request.getRelationPresentation() != null) {
-            evaluation.setRelationPresentation(request.getRelationPresentation());
-        }
-        if (request.getPonctualite() != null) {
-            evaluation.setPonctualite(request.getPonctualite());
-        }
-        if (request.getRespectReglementInterieur() != null) {
-            evaluation.setRespectReglementInterieur(request.getRespectReglementInterieur());
-        }
-
-        // Maîtrise du poste
-        if (request.getNiveauTechnique() != null) {
-            evaluation.setNiveauTechnique(NiveauMaitrise.valueOf(request.getNiveauTechnique()));
-        }
-        if (request.getNiveauExperience() != null) {
-            evaluation.setNiveauExperience(NiveauMaitrise.valueOf(request.getNiveauExperience()));
-        }
-        if (request.getNiveauEncadrement() != null) {
-            evaluation.setNiveauEncadrement(NiveauMaitrise.valueOf(request.getNiveauEncadrement()));
-        }
-        if (request.getCommentairesMaitrise() != null) {
-            evaluation.setCommentairesMaitrise(request.getCommentairesMaitrise());
-        }
-
-        // Commentaires
-        if (request.getCommentaireResponsable() != null) {
-            evaluation.setCommentaireResponsable(request.getCommentaireResponsable());
-        }
-        if (request.getCommentaireCollaborateur() != null) {
-            evaluation.setCommentaireCollaborateur(request.getCommentaireCollaborateur());
-        }
-        if (request.getCommentaireN2() != null) {
-            evaluation.setCommentaireN2(request.getCommentaireN2());
-        }
-        if (request.getCommentaireN3() != null) {
-            evaluation.setCommentaireN3(request.getCommentaireN3());
-        }
-
-        // ========== GESTION DES OBJECTIFS ==========
-        if (request.getObjectifs() != null) {
-            objectifRepository.deleteByEvaluationId(evaluation.getId());
-            evaluation.getObjectifs().clear();
-
-            for (ObjectifEvaluationDTO objDTO : request.getObjectifs()) {
-                if (objDTO.getLibelle() != null && !objDTO.getLibelle().trim().isEmpty()) {
-                    ObjectifEvaluation objectif = new ObjectifEvaluation();
-                    objectif.setLibelle(objDTO.getLibelle());
-                    objectif.setCotation(objDTO.getCotation());
-                    objectif.setTauxAtteinte(objDTO.getTauxAtteinte());
-                    objectif.setAppreciationCollaborateur(objDTO.getAppreciationCollaborateur());
-                    objectif.setAppreciationResponsable(objDTO.getAppreciationResponsable());
-                    objectif.setNiveauAtteinte(objDTO.getNiveauAtteinte());
-                    objectif.setEvaluation(evaluation);
-
-                    objectifRepository.save(objectif);
-                    evaluation.getObjectifs().add(objectif);
+                    ObjectifEvaluation saved = objectifRepository.save(objectif);
+                    evaluation.getObjectifs().add(saved);
+                    System.out.println("✅ Objectif sauvegardé: " + saved.getLibelle());
                 }
             }
         }
@@ -544,6 +466,7 @@ System.out.println("-----------------------savedEvaluation----------------------
         // ========== GESTION DES OBJECTIFS FUTURS ==========
         if (request.getObjectifsFuturs() != null) {
             objectifFuturRepository.deleteByEvaluationId(evaluation.getId());
+            System.out.println("--- Objectifs futurs (" + request.getObjectifsFuturs().size() + ") ---");
             evaluation.getObjectifsFuturs().clear();
 
             for (ObjectifFuturDTO objDTO : request.getObjectifsFuturs()) {
@@ -556,8 +479,8 @@ System.out.println("-----------------------savedEvaluation----------------------
                     objectif.setType(objDTO.getType());
                     objectif.setEvaluation(evaluation);
 
-                    objectifFuturRepository.save(objectif);
-                    evaluation.getObjectifsFuturs().add(objectif);
+                    ObjectifFutur saved = objectifFuturRepository.save(objectif);
+                    evaluation.getObjectifsFuturs().add(saved);
                 }
             }
         }
@@ -565,6 +488,7 @@ System.out.println("-----------------------savedEvaluation----------------------
         // ========== GESTION DES FORMATIONS ==========
         if (request.getSouhaitsFormations() != null) {
             formationRepository.deleteByEvaluationId(evaluation.getId());
+            System.out.println("--- Formations (" + request.getSouhaitsFormations().size() + ") ---");
             evaluation.getSouhaitsFormations().clear();
 
             for (SouhaitFormationDTO formDTO : request.getSouhaitsFormations()) {
@@ -576,8 +500,8 @@ System.out.println("-----------------------savedEvaluation----------------------
                     formation.setDelaisEvaluation(formDTO.getDelaisEvaluation());
                     formation.setEvaluation(evaluation);
 
-                    formationRepository.save(formation);
-                    evaluation.getSouhaitsFormations().add(formation);
+                    SouhaitFormation saved = formationRepository.save(formation);
+                    evaluation.getSouhaitsFormations().add(saved);
                 }
             }
         }
@@ -585,57 +509,19 @@ System.out.println("-----------------------savedEvaluation----------------------
         // ========== RECALCUL DES NOTES ==========
         evaluation.calculerNotes();
 
-        // ========== VALIDATION AUTOMATIQUE ==========
-        // Vérifier si toutes les sections obligatoires sont remplies
-        boolean toutesSectionsRemplies = true;
+        // ========== SAUVEGARDE FINALE ==========
+        Evaluation updated = evaluationRepository.save(evaluation);
+        System.out.println("✅ Évaluation mise à jour avec succès");
+        System.out.println("  - Objectifs: " + updated.getObjectifs().size());
+        System.out.println("  - Respect engagements: " + updated.getRespectEngagements());
+        System.out.println("========== FIN UPDATE ==========");
 
-        // Vérifier les objectifs (au moins un objectif avec cotation)
-        boolean aDesObjectifs = evaluation.getObjectifs() != null &&
-                !evaluation.getObjectifs().isEmpty() &&
-                evaluation.getObjectifs().stream().anyMatch(obj -> obj.getCotation() != null);
-
-        // Vérifier la tenue du poste (au moins un critère noté)
-        boolean aDesNotesTenue = evaluation.getRespectEngagements() != null ||
-                evaluation.getQualiteMethodesTravail() != null ||
-                evaluation.getCapacitesAdaptationOrganisation() != null ||
-                evaluation.getEncadrement() != null ||
-                evaluation.getEspritInitiativeInnovation() != null ||
-                evaluation.getRelationPresentation() != null ||
-                evaluation.getPonctualite() != null ||
-                evaluation.getRespectReglementInterieur() != null;
-
-        // Vérifier les commentaires
-        boolean aDesCommentaires = (evaluation.getCommentaireResponsable() != null && !evaluation.getCommentaireResponsable().isEmpty()) ||
-                (evaluation.getCommentaireCollaborateur() != null && !evaluation.getCommentaireCollaborateur().isEmpty());
-
-        // Si tout est rempli, valider automatiquement
-        if (aDesObjectifs && aDesNotesTenue && aDesCommentaires) {
-            evaluation.setStatut(StatutEvaluation.VALIDEE);
-            evaluation.setDateValidation(LocalDate.now());
-            System.out.println("✅ Évaluation automatiquement validée - Toutes les sections sont remplies");
-        } else {
-            // Sinon, reste en brouillon
-            evaluation.setStatut(StatutEvaluation.BROUILLON);
-            System.out.println("📝 Évaluation en brouillon - Sections manquantes:");
-            if (!aDesObjectifs) System.out.println("   - Objectifs manquants ou sans cotation");
-            if (!aDesNotesTenue) System.out.println("   - Notes de tenue manquantes");
-            if (!aDesCommentaires) System.out.println("   - Commentaires manquants");
-        }
-
-        // ========== LOGS DE VÉRIFICATION ==========
-        System.out.println("=== ÉVALUATION MISE À JOUR ===");
-        System.out.println("ID: " + evaluation.getId());
-        System.out.println("Statut: " + evaluation.getStatut());
-        System.out.println("Objectifs: " + (evaluation.getObjectifs() != null ? evaluation.getObjectifs().size() : 0));
-        System.out.println("Notes tenue: " + aDesNotesTenue);
-        System.out.println("Commentaires: " + aDesCommentaires);
-        System.out.println("Note finale: " + evaluation.getNoteGlobaleFinale());
-        System.out.println("==============================");
-
-        return convertToDTO(evaluationRepository.save(evaluation));
+        return convertToDTO(updated);
     }
-    // Ajouter un objectif à une évaluation
-    @Transactional
+
+    // =============================================
+    // AUTRES MÉTHODES (inchangées)
+    // =============================================
     public ObjectifEvaluationDTO addObjectif(Long evaluationId, ObjectifEvaluationDTO objectifDTO) {
         Evaluation evaluation = evaluationRepository.findById(evaluationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Évaluation non trouvée"));
@@ -649,16 +535,12 @@ System.out.println("-----------------------savedEvaluation----------------------
         objectif.setEvaluation(evaluation);
 
         ObjectifEvaluation saved = objectifRepository.save(objectif);
-
-        // Recalculer la note globale des objectifs
         evaluation.calculerNotes();
         evaluationRepository.save(evaluation);
 
         return convertObjectifToDTO(saved);
     }
 
-    // Ajouter un objectif futur
-    @Transactional
     public ObjectifFuturDTO addObjectifFutur(Long evaluationId, ObjectifFuturDTO objectifDTO) {
         Evaluation evaluation = evaluationRepository.findById(evaluationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Évaluation non trouvée"));
@@ -675,8 +557,6 @@ System.out.println("-----------------------savedEvaluation----------------------
         return convertObjectifFuturToDTO(saved);
     }
 
-    // Ajouter une formation
-    @Transactional
     public SouhaitFormationDTO addFormation(Long evaluationId, SouhaitFormationDTO formationDTO) {
         Evaluation evaluation = evaluationRepository.findById(evaluationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Évaluation non trouvée"));
@@ -692,14 +572,11 @@ System.out.println("-----------------------savedEvaluation----------------------
         return convertFormationToDTO(saved);
     }
 
-    // Changer le statut de l'évaluation
-    @Transactional
     public EvaluationDTO changeStatut(Long id, StatutEvaluation nouveauStatut) {
         Evaluation evaluation = evaluationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Évaluation non trouvée"));
 
         evaluation.setStatut(nouveauStatut);
-
         if (nouveauStatut == StatutEvaluation.VALIDEE) {
             evaluation.setDateValidation(LocalDate.now());
         }
@@ -707,8 +584,6 @@ System.out.println("-----------------------savedEvaluation----------------------
         return convertToDTO(evaluationRepository.save(evaluation));
     }
 
-    // Signer l'évaluation
-    @Transactional
     public EvaluationDTO signerEvaluation(Long id, String signature, boolean isResponsable) {
         Evaluation evaluation = evaluationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Évaluation non trouvée"));
@@ -719,7 +594,6 @@ System.out.println("-----------------------savedEvaluation----------------------
             evaluation.setSignatureCollaborateur(signature);
         }
 
-        // Si les deux signatures sont présentes, passer en validée
         if (evaluation.getSignatureResponsable() != null && evaluation.getSignatureCollaborateur() != null) {
             evaluation.setStatut(StatutEvaluation.VALIDEE);
             evaluation.setDateValidation(LocalDate.now());
@@ -728,7 +602,6 @@ System.out.println("-----------------------savedEvaluation----------------------
         return convertToDTO(evaluationRepository.save(evaluation));
     }
 
-    // Récupérer toutes les évaluations accessibles
     public List<EvaluationDTO> getAllEvaluations() {
         Collaborateur currentUser = getCurrentUser();
         List<Evaluation> evaluations;
@@ -767,26 +640,22 @@ System.out.println("-----------------------savedEvaluation----------------------
                 .collect(Collectors.toList());
     }
 
-    // Récupérer une évaluation par ID
     public EvaluationDTO getEvaluationById(Long id) {
         Evaluation evaluation = evaluationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Évaluation non trouvée"));
         return convertToDTO(evaluation);
     }
 
-    // Récupérer les évaluations d'un collaborateur
     public List<EvaluationDTO> getEvaluationsByCollaborateur(Long collaborateurId) {
         return evaluationRepository.findByCollaborateurId(collaborateurId).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
-    // Récupérer les évaluations à faire pour l'utilisateur connecté
     public List<EvaluationDTO> getEvaluationsAFaire() {
         Collaborateur currentUser = getCurrentUser();
         List<Collaborateur> collaborateursAEvaluer;
 
-        // Récupérer la liste des collaborateurs que l'utilisateur peut évaluer
         switch (currentUser.getRole().toString()) {
             case "ADMIN":
                 collaborateursAEvaluer = collaborateurRepository.findAll();
@@ -816,7 +685,6 @@ System.out.println("-----------------------savedEvaluation----------------------
                 collaborateursAEvaluer = List.of();
         }
 
-        // Pour chaque collaborateur, vérifier s'il a une évaluation pour l'année en cours
         int anneeCourante = LocalDate.now().getYear();
 
         return collaborateursAEvaluer.stream()
@@ -830,6 +698,132 @@ System.out.println("-----------------------savedEvaluation----------------------
                 .collect(Collectors.toList());
     }
 
+    // =============================================
+    // MÉTHODES DE WORKFLOW
+    // =============================================
+    public EvaluationDTO soumettrePourApprobation(Long id) {
+        Evaluation evaluation = evaluationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Évaluation non trouvée"));
 
+        Collaborateur currentUser = getCurrentUser();
 
+        if (!currentUser.getId().equals(evaluation.getEvaluateur().getId())) {
+            throw new UnauthorizedException("Seul l'évaluateur peut soumettre l'évaluation");
+        }
+
+        evaluation.setStatut(StatutEvaluation.A_APPROUVER);
+        return convertToDTO(evaluationRepository.save(evaluation));
+    }
+
+    public EvaluationDTO approuverEvaluation(Long id, String commentaire) {
+        Evaluation evaluation = evaluationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Évaluation non trouvée"));
+
+        Collaborateur currentUser = getCurrentUser();
+        Collaborateur collaborateur = evaluation.getCollaborateur();
+
+        if (!currentUser.getId().equals(collaborateur.getId())) {
+            throw new UnauthorizedException("Seul le collaborateur évalué peut approuver l'évaluation");
+        }
+
+        evaluation.setCommentaireCollaborateur(commentaire);
+        Collaborateur evaluateur = evaluation.getEvaluateur();
+
+        if (evaluateur.getRole() == Role.DIRECTEUR) {
+            evaluation.setStatut(StatutEvaluation.VALIDEE);
+            evaluation.setDateValidation(LocalDate.now());
+        } else if (evaluateur.getRole() == Role.CHEF_SERVICE) {
+            evaluation.setStatut(StatutEvaluation.A_VALIDER_DIRECTEUR);
+        } else if (evaluateur.getRole() == Role.CHEF_SECTION) {
+            evaluation.setStatut(StatutEvaluation.A_VALIDER_SERVICE);
+        } else {
+            evaluation.setStatut(StatutEvaluation.APPROUVEE);
+        }
+
+        return convertToDTO(evaluationRepository.save(evaluation));
+    }
+
+    public EvaluationDTO refuserEvaluation(Long id, String motif) {
+        Evaluation evaluation = evaluationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Évaluation non trouvée"));
+
+        Collaborateur currentUser = getCurrentUser();
+        Collaborateur collaborateur = evaluation.getCollaborateur();
+
+        if (!currentUser.getId().equals(collaborateur.getId())) {
+            throw new UnauthorizedException("Seul le collaborateur évalué peut refuser l'évaluation");
+        }
+
+        evaluation.setCommentaireCollaborateur(motif);
+        evaluation.setStatut(StatutEvaluation.BROUILLON);
+
+        return convertToDTO(evaluationRepository.save(evaluation));
+    }
+
+    public EvaluationDTO validerParChefService(Long id) {
+        Evaluation evaluation = evaluationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Évaluation non trouvée"));
+
+        Collaborateur currentUser = getCurrentUser();
+        Collaborateur evaluateur = evaluation.getEvaluateur();
+
+        boolean estLeChefService = currentUser.getRole() == Role.CHEF_SERVICE &&
+                currentUser.getService() != null &&
+                evaluateur.getService() != null &&
+                currentUser.getService().getId().equals(evaluateur.getService().getId());
+
+        if (!estLeChefService && currentUser.getRole() != Role.ADMIN) {
+            throw new UnauthorizedException("Seul le chef de service de l'évaluateur peut valider cette évaluation");
+        }
+
+        evaluation.setStatut(StatutEvaluation.A_VALIDER_DIRECTEUR);
+        evaluation.setCommentaireN2("Validé par le chef de service le " + LocalDate.now());
+
+        return convertToDTO(evaluationRepository.save(evaluation));
+    }
+
+    public EvaluationDTO validerParDirecteur(Long id) {
+        Evaluation evaluation = evaluationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Évaluation non trouvée"));
+
+        Collaborateur currentUser = getCurrentUser();
+        Collaborateur evaluateur = evaluation.getEvaluateur();
+
+        boolean estLeDirecteur = currentUser.getRole() == Role.DIRECTEUR &&
+                currentUser.getDirection() != null &&
+                evaluateur.getDirection() != null &&
+                currentUser.getDirection().getId().equals(evaluateur.getDirection().getId());
+
+        if (!estLeDirecteur && currentUser.getRole() != Role.ADMIN) {
+            throw new UnauthorizedException("Seul le directeur de l'évaluateur peut valider cette évaluation");
+        }
+
+        evaluation.setStatut(StatutEvaluation.VALIDEE);
+        evaluation.setDateValidation(LocalDate.now());
+        evaluation.setCommentaireN3("Validé par le directeur le " + LocalDate.now());
+
+        return convertToDTO(evaluationRepository.save(evaluation));
+    }
+
+    public EvaluationDTO retournerPourModification(Long id) {
+        Evaluation evaluation = evaluationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Évaluation non trouvée"));
+
+        Collaborateur currentUser = getCurrentUser();
+
+        boolean aLesDroits = currentUser.getRole() == Role.ADMIN ||
+                currentUser.getRole() == Role.DIRECTEUR ||
+                (currentUser.getRole() == Role.CHEF_SERVICE &&
+                        evaluation.getEvaluateur().getService() != null &&
+                        currentUser.getService() != null &&
+                        currentUser.getService().getId().equals(evaluation.getEvaluateur().getService().getId()));
+
+        if (!aLesDroits) {
+            throw new UnauthorizedException("Vous n'avez pas les droits pour retourner cette évaluation");
+        }
+
+        evaluation.setStatut(StatutEvaluation.BROUILLON);
+
+        return convertToDTO(evaluationRepository.save(evaluation));
+    }
 }

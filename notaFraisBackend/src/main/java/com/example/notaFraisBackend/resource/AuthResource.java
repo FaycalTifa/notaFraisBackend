@@ -40,7 +40,6 @@ public class AuthResource {
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequestDTO loginRequest) {
         try {
-            // Authentifier l'utilisateur
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             loginRequest.getEmail(),
@@ -49,35 +48,35 @@ public class AuthResource {
             );
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
-
-            // Générer le token JWT
             String jwt = jwtTokenProvider.generateToken(authentication);
-
-            // Récupérer l'utilisateur authentifié
             User userDetails = (User) authentication.getPrincipal();
-
-            // Récupérer le collaborateur complet
             Collaborateur collaborateur = collaborateurRepository.findByEmail(userDetails.getUsername())
                     .orElseThrow(() -> new RuntimeException("Collaborateur non trouvé"));
 
-            // Créer la réponse avec le DTO approprié
-            LoginResponseDTO response = new LoginResponseDTO(
-                    jwt,
-                    collaborateur.getId(),
-                    collaborateur.getEmail(),
-                    collaborateur.getNomComplet(),
-                    collaborateur.getRole().toString()
-            );
+            // ✅ Créer une réponse complète avec toutes les infos
+            Map<String, Object> response = new HashMap<>();
+            response.put("token", jwt);
+            response.put("id", collaborateur.getId());
+            response.put("email", collaborateur.getEmail());
+            response.put("nom", collaborateur.getNom());
+            response.put("prenoms", collaborateur.getPrenoms());
+            response.put("nomComplet", collaborateur.getNomComplet());
+            response.put("role", collaborateur.getRole().toString());
 
-            // Ajouter les informations d'affectation
+            // ✅ AJOUTER LES INFOS DE DIRECTION
             if (collaborateur.getDirection() != null) {
-                response.setDirection(collaborateur.getDirection().getNom());
+                response.put("directionId", collaborateur.getDirection().getId());
+                response.put("directionNom", collaborateur.getDirection().getNom());
             }
+
             if (collaborateur.getService() != null) {
-                response.setService(collaborateur.getService().getNom());
+                response.put("serviceId", collaborateur.getService().getId());
+                response.put("serviceNom", collaborateur.getService().getNom());
             }
+
             if (collaborateur.getSection() != null) {
-                response.setSection(collaborateur.getSection().getNom());
+                response.put("sectionId", collaborateur.getSection().getId());
+                response.put("sectionNom", collaborateur.getSection().getNom());
             }
 
             return ResponseEntity.ok(response);
@@ -87,4 +86,5 @@ public class AuthResource {
             return ResponseEntity.status(401).body("Email ou mot de passe incorrect");
         }
     }
+
 }

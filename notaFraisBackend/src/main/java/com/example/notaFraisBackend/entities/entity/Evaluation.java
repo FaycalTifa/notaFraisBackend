@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +20,7 @@ import java.util.List;
 @Setter
 @Getter
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-public class Evaluation {
+public class Evaluation implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -50,12 +51,18 @@ public class Evaluation {
     @JoinColumn(name = "evaluateur_id")
     private Collaborateur evaluateur;
 
+    // Ajouter ceci à la place
+    @OneToMany(mappedBy = "evaluation", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FaitMarquant> faitsMarquants = new ArrayList<>();
+/*
+
     // Section II - Faits Marquants
     @ElementCollection
     @CollectionTable(name = "evaluation_faits_marquants",
             joinColumns = @JoinColumn(name = "evaluation_id"))
     @Column(name = "fait", length = 500)
     private List<String> faitsMarquants = new ArrayList<>();
+*/
 
     // Section III - Objectifs
     @OneToMany(mappedBy = "evaluation", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -216,11 +223,20 @@ public class Evaluation {
         this.evaluateur = evaluateur;
     }
 
-    public List<String> getFaitsMarquants() {
+   /* public List<String> getFaitsMarquants() {
         return faitsMarquants;
     }
 
     public void setFaitsMarquants(List<String> faitsMarquants) {
+        this.faitsMarquants = faitsMarquants;
+    }
+*/
+
+    public List<FaitMarquant> getFaitsMarquants() {
+        return faitsMarquants;
+    }
+
+    public void setFaitsMarquants(List<FaitMarquant> faitsMarquants) {
         this.faitsMarquants = faitsMarquants;
     }
 

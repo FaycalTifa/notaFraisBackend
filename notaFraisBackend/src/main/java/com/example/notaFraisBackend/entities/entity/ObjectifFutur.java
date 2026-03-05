@@ -4,13 +4,15 @@ import com.example.notaFraisBackend.entities.enume.TypeObjectif;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.io.Serializable;
+
 @Entity
 @Table(name = "objectifs_futurs")
 @AllArgsConstructor
 @NoArgsConstructor
 @Setter
 @Getter
-public class ObjectifFutur {
+public class ObjectifFutur implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -2,7 +2,9 @@ package com.example.notaFraisBackend.dto;
 
 import com.example.notaFraisBackend.entities.enume.Role;
 
-public class LoginResponseDTO {
+import java.io.Serializable;
+
+public class LoginResponseDTO implements Serializable {
     private String token;
     private String type = "Bearer";
     private Long id;

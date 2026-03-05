@@ -1,6 +1,8 @@
 package com.example.notaFraisBackend.dto;
 
-public class SouhaitFormationDTO {
+import java.io.Serializable;
+
+public class SouhaitFormationDTO implements Serializable {
 
     private Long id;
     private String theme;

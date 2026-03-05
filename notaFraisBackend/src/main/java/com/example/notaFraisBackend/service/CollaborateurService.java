@@ -128,13 +128,12 @@ public class CollaborateurService {
         dto.setPrenoms(collaborateur.getPrenoms());
         dto.setNomComplet(collaborateur.getNomComplet());
         dto.setMatricule(collaborateur.getMatricule());
-        dto.setEmail(collaborateur.getEmail());
-        dto.setTelephone(collaborateur.getTelephone());
-        dto.setDateEmbauche(collaborateur.getDateEmbauche());
         dto.setPosteActuel(collaborateur.getPosteActuel());
-        dto.setExperienceCumulee(collaborateur.getExperienceCumulee());
         dto.setRole(collaborateur.getRole());
-        dto.setActif(collaborateur.isActif());
+        // ✅ AJOUTER LA SIGNATURE
+        dto.setSignature(collaborateur.getSignature());
+        dto.setSignatureFilename(collaborateur.getSignatureFilename());
+        dto.setSignatureContentType(collaborateur.getSignatureContentType());
 
         if (collaborateur.getDirection() != null) {
             dto.setDirectionId(collaborateur.getDirection().getId());
@@ -148,14 +147,7 @@ public class CollaborateurService {
             dto.setSectionId(collaborateur.getSection().getId());
             dto.setSectionNom(collaborateur.getSection().getNom());
         }
-        if (collaborateur.getResponsableDirect() != null) {
-            dto.setResponsableDirectId(collaborateur.getResponsableDirect().getId());
-            dto.setResponsableDirectNom(collaborateur.getResponsableDirect().getNomComplet());
-        }
-        if (collaborateur.getResponsableHierarchique() != null) {
-            dto.setResponsableHierarchiqueId(collaborateur.getResponsableHierarchique().getId());
-            dto.setResponsableHierarchiqueNom(collaborateur.getResponsableHierarchique().getNomComplet());
-        }
+
         return dto;
     }
 
@@ -237,6 +229,16 @@ public class CollaborateurService {
         collaborateur.setPosteActuel(request.getPosteActuel());
         collaborateur.setRole(request.getRole());
 
+        // ✅ AJOUTER LA SIGNATURE ICI !
+        if (request.getSignature() != null && !request.getSignature().isEmpty()) {
+            System.out.println("📝 Sauvegarde de la signature...");
+            collaborateur.setSignature(request.getSignature());
+            collaborateur.setSignatureFilename(request.getSignatureFilename());
+            collaborateur.setSignatureContentType(request.getSignatureContentType());
+        } else {
+            System.out.println("⚠️ Aucune signature reçue");
+        }
+
         // Mot de passe par défaut = matricule
         String password = request.getPassword() != null ? request.getPassword() : request.getMatricule();
         collaborateur.setPassword(passwordEncoder.encode(password));
@@ -268,6 +270,7 @@ public class CollaborateurService {
 
         collaborateur.updateNomComplet();
         Collaborateur saved = collaborateurRepository.save(collaborateur);
+        System.out.println("✅ Collaborateur créé avec signature: " + (saved.getSignature() != null ? "Oui" : "Non"));
         return convertToDTO(saved);
     }
 
@@ -340,20 +343,31 @@ public class CollaborateurService {
                 .collect(Collectors.toList());
     }
 
-    // Obtenir les collaborateurs évaluables
-    @Transactional
+
+    @Transactional()
     public List<CollaborateurDTO> getCollaborateursEvaluables() {
+
         UserInfo currentUser = getCurrentUserInfo();
 
-        List<Collaborateur> collaborateurs = collaborateurRepository.findEvaluables(
-                currentUser.getRole(),
-                currentUser.getDirectionId(),
-                currentUser.getServiceId(),
-                currentUser.getSectionId()
-        );
+        switch (currentUser.getRole()) {
 
-        return collaborateurs.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+            case "ADMIN":
+                return collaborateurRepository.findAllEvaluablesAdmin();
+
+            case "DIRECTEUR":
+                return collaborateurRepository
+                        .findEvaluablesByDirection(currentUser.getDirectionId());
+
+            case "CHEF_SERVICE":
+                return collaborateurRepository
+                        .findEvaluablesByService(currentUser.getServiceId());
+
+            case "CHEF_SECTION":
+                return collaborateurRepository
+                        .findEvaluablesBySection(currentUser.getSectionId());
+
+            default:
+                return List.of();
+        }
     }
 }

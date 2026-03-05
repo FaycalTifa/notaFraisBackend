@@ -39,7 +39,22 @@ public class CollaborateurResource {
     @GetMapping("/evaluables")
     @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTEUR', 'CHEF_SERVICE', 'CHEF_SECTION')")
     public ResponseEntity<List<CollaborateurDTO>> getCollaborateursEvaluables() {
-        return ResponseEntity.ok(collaborateurService.getCollaborateursEvaluables());
+        long startTime = System.currentTimeMillis();
+        System.out.println("📡 GET /api/collaborateurs/evaluables");
+
+        try {
+            List<CollaborateurDTO> resultats = collaborateurService.getCollaborateursEvaluables();
+
+            long endTime = System.currentTimeMillis();
+            System.out.println("✅ Réponse envoyée: " + resultats.size() + " collaborateurs en " + (endTime - startTime) + "ms");
+
+            return ResponseEntity.ok(resultats);
+
+        } catch (Exception e) {
+            System.err.println("❌ ERREUR: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(List.of());
+        }
     }
 
     @GetMapping("/{id}")

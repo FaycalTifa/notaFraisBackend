@@ -3,12 +3,13 @@ package com.example.notaFraisBackend.dto;
 import com.example.notaFraisBackend.entities.entity.Evaluation;
 import com.example.notaFraisBackend.entities.enume.StatutEvaluation;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class EvaluationDTO {
+public class EvaluationDTO implements Serializable {
 
 
     private Long id;
@@ -25,7 +26,7 @@ public class EvaluationDTO {
     private String evaluateurNom;
 
     // Section II - Faits Marquants
-    private List<String> faitsMarquants;
+    private List<FaitMarquantDTO> faitsMarquants;
 
     // Section III - Objectifs
     private List<ObjectifEvaluationDTO> objectifs;
@@ -66,6 +67,14 @@ public class EvaluationDTO {
     // Notes antérieures
     private List<Double> notesAnterieures;
 
+    // AJOUTER CES CHAMPS
+    private CollaborateurDTO collaborateur;
+    private CollaborateurDTO evaluateur;
+
+    public EvaluationDTO() {
+
+    }
+
     // Getters et Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -97,8 +106,13 @@ public class EvaluationDTO {
     public String getEvaluateurNom() { return evaluateurNom; }
     public void setEvaluateurNom(String evaluateurNom) { this.evaluateurNom = evaluateurNom; }
 
-    public List<String> getFaitsMarquants() { return faitsMarquants; }
-    public void setFaitsMarquants(List<String> faitsMarquants) { this.faitsMarquants = faitsMarquants; }
+    public List<FaitMarquantDTO> getFaitsMarquants() {
+        return faitsMarquants;
+    }
+
+    public void setFaitsMarquants(List<FaitMarquantDTO> faitsMarquants) {
+        this.faitsMarquants = faitsMarquants;
+    }
 
     public List<ObjectifEvaluationDTO> getObjectifs() { return objectifs; }
     public void setObjectifs(List<ObjectifEvaluationDTO> objectifs) { this.objectifs = objectifs; }
@@ -173,5 +187,63 @@ public class EvaluationDTO {
     public void setSignatureCollaborateur(String signatureCollaborateur) { this.signatureCollaborateur = signatureCollaborateur; }
 
     public List<Double> getNotesAnterieures() { return notesAnterieures; }
+
+    public CollaborateurDTO getCollaborateur() {
+        return collaborateur;
+    }
+
+    public void setCollaborateur(CollaborateurDTO collaborateur) {
+        this.collaborateur = collaborateur;
+    }
+
+    public CollaborateurDTO getEvaluateur() {
+        return evaluateur;
+    }
+
+    public void setEvaluateur(CollaborateurDTO evaluateur) {
+        this.evaluateur = evaluateur;
+    }
+
     public void setNotesAnterieures(List<Double> notesAnterieures) { this.notesAnterieures = notesAnterieures; }
+
+    public EvaluationDTO(Long id, Integer annee, LocalDate dateCreation, LocalDate dateEntretien, LocalDate dateValidation, StatutEvaluation statut, Long collaborateurId, String collaborateurNom, Long evaluateurId, String evaluateurNom, List<FaitMarquantDTO> faitsMarquants, List<ObjectifEvaluationDTO> objectifs, Double noteGlobaleObjectifs, Integer respectEngagements, Integer qualiteMethodesTravail, Integer capacitesAdaptationOrganisation, Integer encadrement, Integer espritInitiativeInnovation, Integer relationPresentation, Integer ponctualite, Integer respectReglementInterieur, Double noteGlobaleTenuePoste, String niveauTechnique, String niveauExperience, String niveauEncadrement, String commentairesMaitrise, List<ObjectifFuturDTO> objectifsFuturs, List<SouhaitFormationDTO> souhaitsFormations, Double noteGlobaleFinale, String commentaireResponsable, String commentaireCollaborateur, String commentaireN2, String commentaireN3, String signatureResponsable, String signatureCollaborateur, List<Double> notesAnterieures, CollaborateurDTO collaborateur, CollaborateurDTO evaluateur) {
+        this.id = id;
+        this.annee = annee;
+        this.dateCreation = dateCreation;
+        this.dateEntretien = dateEntretien;
+        this.dateValidation = dateValidation;
+        this.statut = statut;
+        this.collaborateurId = collaborateurId;
+        this.collaborateurNom = collaborateurNom;
+        this.evaluateurId = evaluateurId;
+        this.evaluateurNom = evaluateurNom;
+        this.faitsMarquants = faitsMarquants;
+        this.objectifs = objectifs;
+        this.noteGlobaleObjectifs = noteGlobaleObjectifs;
+        this.respectEngagements = respectEngagements;
+        this.qualiteMethodesTravail = qualiteMethodesTravail;
+        this.capacitesAdaptationOrganisation = capacitesAdaptationOrganisation;
+        this.encadrement = encadrement;
+        this.espritInitiativeInnovation = espritInitiativeInnovation;
+        this.relationPresentation = relationPresentation;
+        this.ponctualite = ponctualite;
+        this.respectReglementInterieur = respectReglementInterieur;
+        this.noteGlobaleTenuePoste = noteGlobaleTenuePoste;
+        this.niveauTechnique = niveauTechnique;
+        this.niveauExperience = niveauExperience;
+        this.niveauEncadrement = niveauEncadrement;
+        this.commentairesMaitrise = commentairesMaitrise;
+        this.objectifsFuturs = objectifsFuturs;
+        this.souhaitsFormations = souhaitsFormations;
+        this.noteGlobaleFinale = noteGlobaleFinale;
+        this.commentaireResponsable = commentaireResponsable;
+        this.commentaireCollaborateur = commentaireCollaborateur;
+        this.commentaireN2 = commentaireN2;
+        this.commentaireN3 = commentaireN3;
+        this.signatureResponsable = signatureResponsable;
+        this.signatureCollaborateur = signatureCollaborateur;
+        this.notesAnterieures = notesAnterieures;
+        this.collaborateur = collaborateur;
+        this.evaluateur = evaluateur;
+    }
 }

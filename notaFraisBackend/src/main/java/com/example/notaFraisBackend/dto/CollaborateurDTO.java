@@ -56,12 +56,40 @@ private String experienceCumulee;
     private Long responsableHierarchiqueId;
     private String responsableHierarchiqueNom;
 
+    private String signature;
+    private String signatureFilename;
+    private String signatureContentType;
+
     // Constructeurs
     public CollaborateurDTO() {}
 
     // Getters et Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
+    public String getSignature() {
+        return signature;
+    }
+
+    public void setSignature(String signature) {
+        this.signature = signature;
+    }
+
+    public String getSignatureFilename() {
+        return signatureFilename;
+    }
+
+    public void setSignatureFilename(String signatureFilename) {
+        this.signatureFilename = signatureFilename;
+    }
+
+    public String getSignatureContentType() {
+        return signatureContentType;
+    }
+
+    public void setSignatureContentType(String signatureContentType) {
+        this.signatureContentType = signatureContentType;
+    }
 
     public String getNom() { return nom; }
     public void setNom(String nom) { this.nom = nom; }
@@ -134,5 +162,33 @@ private String experienceCumulee;
 
     public String getExperienceCumulee() {
         return experienceCumulee;
+    }
+
+    public CollaborateurDTO(
+            Long id,
+            String nom,
+            String prenoms,
+            String nomComplet,
+            String matricule,
+            String posteActuel,
+            Long directionId,
+            String directionNom,
+            Long serviceId,
+            String serviceNom,
+            Long sectionId,
+            String sectionNom
+    ) {
+        this.id = id;
+        this.nom = nom;
+        this.prenoms = prenoms;
+        this.nomComplet = nomComplet;
+        this.matricule = matricule;
+        this.posteActuel = posteActuel;
+        this.directionId = directionId;
+        this.directionNom = directionNom;
+        this.serviceId = serviceId;
+        this.serviceNom = serviceNom;
+        this.sectionId = sectionId;
+        this.sectionNom = sectionNom;
     }
 }

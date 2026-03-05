@@ -1,16 +1,17 @@
 package com.example.notaFraisBackend.dto;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
 
-public class EvaluationRequestDTO {
+public class EvaluationRequestDTO implements Serializable {
 
     private Integer annee;
     private LocalDate dateEntretien;
     private Long collaborateurId;
 
     // Section II - Faits Marquants
-    private List<String> faitsMarquants;
+   /* private List<String> faitsMarquants;*/
 
     // Section III - Objectifs
     private List<ObjectifEvaluationDTO> objectifs;
@@ -43,6 +44,10 @@ public class EvaluationRequestDTO {
     private String commentaireN2;
     private String commentaireN3;
 
+    private List<FaitMarquantDTO> faitsMarquants;
+
+    // Getter et Setter
+
     // Getters et Setters
     public Integer getAnnee() { return annee; }
     public void setAnnee(Integer annee) { this.annee = annee; }
@@ -53,9 +58,17 @@ public class EvaluationRequestDTO {
     public Long getCollaborateurId() { return collaborateurId; }
     public void setCollaborateurId(Long collaborateurId) { this.collaborateurId = collaborateurId; }
 
-    public List<String> getFaitsMarquants() { return faitsMarquants; }
-    public void setFaitsMarquants(List<String> faitsMarquants) { this.faitsMarquants = faitsMarquants; }
+    public List<FaitMarquantDTO> getFaitsMarquants() {
+        return faitsMarquants;
+    }
 
+    public void setFaitsMarquants(List<FaitMarquantDTO> faitsMarquants) {
+        this.faitsMarquants = faitsMarquants;
+    }
+
+    /*public List<String> getFaitsMarquants() { return faitsMarquants; }
+        public void setFaitsMarquants(List<String> faitsMarquants) { this.faitsMarquants = faitsMarquants; }
+    */
     public List<ObjectifEvaluationDTO> getObjectifs() { return objectifs; }
     public void setObjectifs(List<ObjectifEvaluationDTO> objectifs) { this.objectifs = objectifs; }
 

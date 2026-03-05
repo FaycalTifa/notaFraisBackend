@@ -98,6 +98,7 @@ public class EvaluationResource {
         return ResponseEntity.ok(evaluationService.changeStatut(id, statut));
     }
 
+    // Dans EvaluationResource.java
     @PostMapping("/{id}/signature")
     @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTEUR', 'CHEF_SERVICE', 'CHEF_SECTION', 'COLLABORATEUR')")
     public ResponseEntity<EvaluationDTO> signerEvaluation(
@@ -113,4 +114,51 @@ public class EvaluationResource {
         // À implémenter si nécessaire
         return ResponseEntity.noContent().build();
     }
+
+    // resource/EvaluationResource.java
+// Ajoutez ces méthodes après les méthodes existantes
+
+    @PostMapping("/{id}/soumettre-approbation")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTEUR', 'CHEF_SERVICE', 'CHEF_SECTION')")
+    public ResponseEntity<EvaluationDTO> soumettrePourApprobation(@PathVariable Long id) {
+        return ResponseEntity.ok(evaluationService.soumettrePourApprobation(id));
+    }
+
+    @PostMapping("/{id}/approuver")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTEUR', 'CHEF_SERVICE', 'CHEF_SECTION', 'COLLABORATEUR')")
+    public ResponseEntity<EvaluationDTO> approuverEvaluation(
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, String> body) {
+        String commentaire = body != null ? body.get("commentaire") : null;
+        return ResponseEntity.ok(evaluationService.approuverEvaluation(id, commentaire));
+    }
+
+    @PostMapping("/{id}/refuser")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTEUR', 'CHEF_SERVICE', 'CHEF_SECTION', 'COLLABORATEUR')")
+    public ResponseEntity<EvaluationDTO> refuserEvaluation(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body) {
+        String motif = body.get("motif");
+        return ResponseEntity.ok(evaluationService.refuserEvaluation(id, motif));
+    }
+
+    @PostMapping("/{id}/valider-chef-service")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CHEF_SERVICE')")
+    public ResponseEntity<EvaluationDTO> validerParChefService(@PathVariable Long id) {
+        return ResponseEntity.ok(evaluationService.validerParChefService(id));
+    }
+
+    @PostMapping("/{id}/valider-directeur")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTEUR')")
+    public ResponseEntity<EvaluationDTO> validerParDirecteur(@PathVariable Long id) {
+        return ResponseEntity.ok(evaluationService.validerParDirecteur(id));
+    }
+
+    @PostMapping("/{id}/retourner")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTEUR', 'CHEF_SERVICE')")
+    public ResponseEntity<EvaluationDTO> retournerPourModification(@PathVariable Long id) {
+        return ResponseEntity.ok(evaluationService.retournerPourModification(id));
+    }
+
+
 }

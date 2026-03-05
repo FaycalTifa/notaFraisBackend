@@ -2,7 +2,9 @@ package com.example.notaFraisBackend.dto;
 
 import com.example.notaFraisBackend.entities.enume.NiveauAtteinte;
 
-public class ObjectifEvaluationDTO {
+import java.io.Serializable;
+
+public class ObjectifEvaluationDTO implements Serializable {
 
     private Long id;
     private String libelle;

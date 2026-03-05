@@ -15,11 +15,17 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.time.LocalDate;
+import java.util.Base64;
 
 @Component
 
 public class DataInitializer implements CommandLineRunner {
+
 
     @Autowired
     private CollaborateurRepository collaborateurRepository;
@@ -39,7 +45,7 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        System.out.println("=== DÉBUT DE L'INITIALISATION DES DONNÉES ===");
+        System.out.println("=== DÉBUT DE L'INITIALISATION DES DONNÉES AVEC SIGNATURES ===");
 
         // 1. Créer les directions
         createDirections();
@@ -50,10 +56,10 @@ public class DataInitializer implements CommandLineRunner {
         // 3. Créer les sections
         createSections();
 
-        // 4. Créer les utilisateurs
+        // 4. Créer les utilisateurs avec signatures
         createUsers();
 
-        System.out.println("=== FIN DE L'INITIALISATION DES DONNÉES ===");
+        System.out.println("=== FIN DE L'INITIALISATION DES DONNÉES AVEC SIGNATURES ===");
     }
 
     private void createDirections() {
@@ -172,9 +178,74 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
 
+    /**
+     * Génère une signature en image PNG encodée en Base64
+     */
+    private String generateSignature(String nom, String prenom) {
+        try {
+            // Créer une image de signature
+            int width = 300;
+            int height = 100;
+            BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+            Graphics2D g2d = bufferedImage.createGraphics();
+
+            // Fond blanc
+            g2d.setColor(Color.WHITE);
+            g2d.fillRect(0, 0, width, height);
+
+            // Ajouter un cadre gris clair
+            g2d.setColor(new Color(240, 240, 240));
+            g2d.drawRect(0, 0, width - 1, height - 1);
+
+            // Dessiner une signature stylisée
+            g2d.setColor(new Color(44, 62, 80)); // Bleu foncé
+            g2d.setStroke(new BasicStroke(2));
+
+            // Ligne de signature sinueuse
+            int[] xPoints = {50, 80, 110, 140, 170, 200, 230};
+            int[] yPoints = {60, 30, 60, 30, 60, 30, 60};
+            g2d.drawPolyline(xPoints, yPoints, xPoints.length);
+
+            // Ajouter le nom en texte
+            g2d.setColor(new Color(52, 73, 94));
+            g2d.setFont(new Font("Arial", Font.PLAIN, 12));
+            g2d.drawString(prenom + " " + nom, 50, 80);
+
+            // Ajouter les initiales en rouge
+            g2d.setColor(new Color(231, 76, 60));
+            g2d.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 20));
+            String initiales = String.valueOf(prenom.charAt(0)) + String.valueOf(nom.charAt(0));
+            g2d.drawString(initiales, 200, 40);
+
+            g2d.dispose();
+
+            // Convertir en Base64
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(bufferedImage, "png", baos);
+            byte[] imageBytes = baos.toByteArray();
+            String base64Image = Base64.getEncoder().encodeToString(imageBytes);
+
+            return "data:image/png;base64," + base64Image;
+
+        } catch (Exception e) {
+            System.err.println("❌ Erreur génération signature: " + e.getMessage());
+            // Fallback: signature texte simple
+            String simpleSignature = prenom + " " + nom;
+            return "data:text/plain;base64," + Base64.getEncoder().encodeToString(simpleSignature.getBytes());
+        }
+    }
+
+    /**
+     * Version alternative avec signature texte simple
+     */
+    private String generateTextSignature(String nom, String prenom) {
+        String signatureText = prenom + " " + nom;
+        return "data:text/plain;base64," + Base64.getEncoder().encodeToString(signatureText.getBytes());
+    }
+
     private void createUsers() {
         if (collaborateurRepository.count() == 0) {
-            System.out.println("Création des utilisateurs...");
+            System.out.println("Création des utilisateurs avec signatures...");
 
             // Récupérer les entités nécessaires
             Direction dirGen = directionRepository.findByCode("DIR001").orElseThrow();
@@ -201,13 +272,17 @@ public class DataInitializer implements CommandLineRunner {
             admin.setDateEmbauche(LocalDate.now());
             admin.setPosteActuel("Administrateur Système");
             admin.setDirection(dirGen);
+            // ✅ Signature Admin
+            admin.setSignature(generateSignature("ADMIN", "System"));
+            admin.setSignatureFilename("signature_admin.png");
+            admin.setSignatureContentType("image/png");
             collaborateurRepository.save(admin);
-            System.out.println("  ✓ Admin créé: admin@example.com / admin123");
+            System.out.println("  ✓ Admin créé avec signature");
 
             // 2. DIRECTEUR TECHNIQUE
             Collaborateur directeurTech = new Collaborateur();
-            directeurTech.setNom("TRAORE");
-            directeurTech.setPrenoms("Issa Faycal");
+            directeurTech.setNom("MAIGA");
+            directeurTech.setPrenoms("Moumouni");
             directeurTech.setMatricule("DIR001");
             directeurTech.setEmail("directeur.tech@entreprise.com");
             directeurTech.setPassword(passwordEncoder.encode("directeur123"));
@@ -216,8 +291,12 @@ public class DataInitializer implements CommandLineRunner {
             directeurTech.setDateEmbauche(LocalDate.now().minusYears(2));
             directeurTech.setPosteActuel("Directeur Technique");
             directeurTech.setDirection(dirTech);
+            // ✅ Signature Directeur Technique
+            directeurTech.setSignature(generateSignature("MAIGA", "Moumouni"));
+            directeurTech.setSignatureFilename("signature_maiga.png");
+            directeurTech.setSignatureContentType("image/png");
             collaborateurRepository.save(directeurTech);
-            System.out.println("  ✓ Directeur Technique créé: directeur.tech@entreprise.com / directeur123");
+            System.out.println("  ✓ Directeur Technique créé avec signature");
 
             // 3. DIRECTEUR COMMERCIAL
             Collaborateur directeurComm = new Collaborateur();
@@ -231,8 +310,12 @@ public class DataInitializer implements CommandLineRunner {
             directeurComm.setDateEmbauche(LocalDate.now().minusYears(3));
             directeurComm.setPosteActuel("Directeur Commercial");
             directeurComm.setDirection(dirComm);
+            // ✅ Signature Directeur Commercial
+            directeurComm.setSignature(generateSignature("DIALLO", "Amadou"));
+            directeurComm.setSignatureFilename("signature_diallo.png");
+            directeurComm.setSignatureContentType("image/png");
             collaborateurRepository.save(directeurComm);
-            System.out.println("  ✓ Directeur Commercial créé: directeur.comm@entreprise.com / directeur123");
+            System.out.println("  ✓ Directeur Commercial créé avec signature");
 
             // 4. CHEF DE SERVICE INFORMATIQUE
             Collaborateur chefInfo = new Collaborateur();
@@ -249,8 +332,12 @@ public class DataInitializer implements CommandLineRunner {
             chefInfo.setService(srvInfo);
             chefInfo.setResponsableDirect(directeurTech);
             chefInfo.setResponsableHierarchique(directeurTech);
+            // ✅ Signature Chef Service Info
+            chefInfo.setSignature(generateSignature("SANHAMA", "Sawadogo"));
+            chefInfo.setSignatureFilename("signature_sanhama.png");
+            chefInfo.setSignatureContentType("image/png");
             collaborateurRepository.save(chefInfo);
-            System.out.println("  ✓ Chef Service Info créé: chef.info@entreprise.com / chef123");
+            System.out.println("  ✓ Chef Service Info créé avec signature");
 
             // 5. CHEF DE SECTION DÉVELOPPEMENT
             Collaborateur chefDev = new Collaborateur();
@@ -268,8 +355,12 @@ public class DataInitializer implements CommandLineRunner {
             chefDev.setSection(secDev);
             chefDev.setResponsableDirect(chefInfo);
             chefDev.setResponsableHierarchique(directeurTech);
+            // ✅ Signature Chef Section Développement
+            chefDev.setSignature(generateSignature("OUEDRAOGO", "Jean"));
+            chefDev.setSignatureFilename("signature_ouedraogo.png");
+            chefDev.setSignatureContentType("image/png");
             collaborateurRepository.save(chefDev);
-            System.out.println("  ✓ Chef Section Développement créé: chef.dev@entreprise.com / section123");
+            System.out.println("  ✓ Chef Section Développement créé avec signature");
 
             // 6. COLLABORATEUR (Développeur)
             Collaborateur dev = new Collaborateur();
@@ -287,8 +378,12 @@ public class DataInitializer implements CommandLineRunner {
             dev.setSection(secDev);
             dev.setResponsableDirect(chefDev);
             dev.setResponsableHierarchique(chefInfo);
+            // ✅ Signature Développeur
+            dev.setSignature(generateSignature("KONE", "Moussa"));
+            dev.setSignatureFilename("signature_kone.png");
+            dev.setSignatureContentType("image/png");
             collaborateurRepository.save(dev);
-            System.out.println("  ✓ Développeur créé: moussa.kone@entreprise.com / dev123");
+            System.out.println("  ✓ Développeur créé avec signature");
 
             // 7. COLLABORATEUR (Commercial B2B)
             Collaborateur commercial = new Collaborateur();
@@ -306,8 +401,12 @@ public class DataInitializer implements CommandLineRunner {
             commercial.setSection(secB2B);
             commercial.setResponsableDirect(directeurComm);
             commercial.setResponsableHierarchique(directeurComm);
+            // ✅ Signature Commercial
+            commercial.setSignature(generateSignature("SISSOKO", "Fatou"));
+            commercial.setSignatureFilename("signature_sissoko.png");
+            commercial.setSignatureContentType("image/png");
             collaborateurRepository.save(commercial);
-            System.out.println("  ✓ Commercial créé: fatou.sissoko@entreprise.com / com123");
+            System.out.println("  ✓ Commercial créé avec signature");
 
             // 8. RESPONSABLE RH
             Collaborateur responsableRH = new Collaborateur();
@@ -322,12 +421,14 @@ public class DataInitializer implements CommandLineRunner {
             responsableRH.setPosteActuel("Responsable RH");
             responsableRH.setDirection(dirRH);
             responsableRH.setService(srvRH);
-            responsableRH.setResponsableDirect(responsableRH);
-            responsableRH.setResponsableHierarchique(responsableRH);
+            // ✅ Signature Responsable RH
+            responsableRH.setSignature(generateSignature("BARRY", "Aissata"));
+            responsableRH.setSignatureFilename("signature_barry.png");
+            responsableRH.setSignatureContentType("image/png");
             collaborateurRepository.save(responsableRH);
-            System.out.println("  ✓ Responsable RH créé: rh@entreprise.com / rh123");
+            System.out.println("  ✓ Responsable RH créé avec signature");
 
-            // 9. DIRECTEUR RH (à créer après car responsableRH en dépend)
+            // 9. DIRECTEUR RH
             Collaborateur directeurRH = new Collaborateur();
             directeurRH.setNom("TOURE");
             directeurRH.setPrenoms("Mamadou");
@@ -339,17 +440,22 @@ public class DataInitializer implements CommandLineRunner {
             directeurRH.setDateEmbauche(LocalDate.now().minusYears(5));
             directeurRH.setPosteActuel("Directeur RH");
             directeurRH.setDirection(dirRH);
+            // ✅ Signature Directeur RH
+            directeurRH.setSignature(generateSignature("TOURE", "Mamadou"));
+            directeurRH.setSignatureFilename("signature_toure.png");
+            directeurRH.setSignatureContentType("image/png");
             collaborateurRepository.save(directeurRH);
-            System.out.println("  ✓ Directeur RH créé: directeur.rh@entreprise.com / directeur123");
+            System.out.println("  ✓ Directeur RH créé avec signature");
 
             // Mettre à jour le responsable RH pour ajouter son responsable hiérarchique
             responsableRH.setResponsableDirect(directeurRH);
             responsableRH.setResponsableHierarchique(directeurRH);
             collaborateurRepository.save(responsableRH);
 
-            System.out.println("✓ Tous les utilisateurs ont été créés avec succès");
+            System.out.println("✓ Tous les utilisateurs ont été créés avec leurs signatures");
         } else {
             System.out.println("⚠ Des utilisateurs existent déjà dans la base");
         }
     }
 }
+

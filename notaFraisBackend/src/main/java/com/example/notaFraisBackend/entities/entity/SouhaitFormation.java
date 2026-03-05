@@ -5,13 +5,15 @@ import com.example.notaFraisBackend.entities.entity.Evaluation;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.io.Serializable;
+
 @Entity
 @Table(name = "souhaits_formation")
 @AllArgsConstructor
 @NoArgsConstructor
 @Setter
 @Getter
-public class SouhaitFormation {
+public class SouhaitFormation implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -5,12 +5,14 @@ import com.example.notaFraisBackend.entities.enume.NiveauAtteinte;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.io.Serializable;
+
 @Entity
 @Table(name = "objectifs_evaluation")
 @Data
 @Setter
 @Getter
-public class ObjectifEvaluation {
+public class ObjectifEvaluation implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

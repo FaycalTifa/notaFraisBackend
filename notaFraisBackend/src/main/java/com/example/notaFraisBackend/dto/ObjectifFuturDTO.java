@@ -2,7 +2,9 @@ package com.example.notaFraisBackend.dto;
 
 import com.example.notaFraisBackend.entities.enume.TypeObjectif;
 
-public class ObjectifFuturDTO {
+import java.io.Serializable;
+
+public class ObjectifFuturDTO implements Serializable {
 
     private Long id;
     private String libelle;

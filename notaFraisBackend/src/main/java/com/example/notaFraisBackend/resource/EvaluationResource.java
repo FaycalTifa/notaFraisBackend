@@ -9,13 +9,19 @@ import com.example.notaFraisBackend.entities.enume.Role;
 import com.example.notaFraisBackend.entities.enume.StatutEvaluation;
 import com.example.notaFraisBackend.service.AuthService;
 import com.example.notaFraisBackend.service.EvaluationService;
+import com.example.notaFraisBackend.service.ExportService;
+import com.github.dockerjava.api.exception.UnauthorizedException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -27,6 +33,10 @@ public class EvaluationResource {
 
     @Autowired
     private EvaluationService evaluationService;
+
+    @Autowired
+    private ExportService exportService;
+
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTEUR', 'CHEF_SERVICE', 'CHEF_SECTION' , 'COLLABORATEUR')")
@@ -139,9 +149,11 @@ public class EvaluationResource {
             @PathVariable Long id,
             @RequestBody Map<String, String> body) {
         String motif = body.get("motif");
+        if (motif == null || motif.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
         return ResponseEntity.ok(evaluationService.refuserEvaluation(id, motif));
     }
-
     @PostMapping("/{id}/valider-chef-service")
     @PreAuthorize("hasAnyRole('ADMIN', 'CHEF_SERVICE')")
     public ResponseEntity<EvaluationDTO> validerParChefService(@PathVariable Long id) {
@@ -154,10 +166,48 @@ public class EvaluationResource {
         return ResponseEntity.ok(evaluationService.validerParDirecteur(id));
     }
 
+
+    // =============================================
+// ENDPOINT D'ANNULATION
+// =============================================
+    /**
+     * Endpoint pour annuler une évaluation
+     */
+    @PostMapping("/{id}/annuler")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTEUR')")
+    public ResponseEntity<EvaluationDTO> annulerEvaluation(
+            @PathVariable Long id,
+            @Valid @RequestBody AnnulationRequestDTO request) {
+
+        System.out.println("📝 Requête d'annulation reçue pour l'évaluation ID: " + id);
+        System.out.println("   Motif: " + request.getMotif());
+
+        EvaluationDTO result = evaluationService.annulerEvaluation(id, request.getMotif());
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Endpoint pour retourner avec motif
+     */
     @PostMapping("/{id}/retourner")
     @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTEUR', 'CHEF_SERVICE')")
-    public ResponseEntity<EvaluationDTO> retournerPourModification(@PathVariable Long id) {
-        return ResponseEntity.ok(evaluationService.retournerPourModification(id));
+    public ResponseEntity<EvaluationDTO> retournerPourModification(
+            @PathVariable Long id,
+            @Valid @RequestBody AnnulationRequestDTO request) {
+
+        System.out.println("📝 Requête de retour reçue pour l'évaluation ID: " + id);
+        System.out.println("   Motif: " + request.getMotif());
+
+        EvaluationDTO result = evaluationService.retournerPourModification(id, request.getMotif());
+        return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/{id}/reactiver")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<EvaluationDTO> reactiverEvaluation(@PathVariable Long id) {
+        System.out.println("📝 Requête de réactivation reçue pour l'évaluation ID: " + id);
+        EvaluationDTO result = evaluationService.reactiverEvaluation(id);
+        return ResponseEntity.ok(result);
     }
 
 

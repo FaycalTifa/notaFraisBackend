@@ -9,7 +9,10 @@ public enum StatutEvaluation {
     A_VALIDER_DIRECTEUR("À valider par le directeur"),
     EN_COURS("En cours de validation"),
     VALIDEE("Validée"),
-    REFUSEE("Refusée");
+    REFUSEE("Refusée"),
+    ANNULEE ("Annulée");
+
+
     private final String label;
 
     StatutEvaluation(String label) {

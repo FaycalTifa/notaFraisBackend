@@ -35,4 +35,20 @@ public interface EvaluationRepository extends JpaRepository<Evaluation, Long> {
     Optional<Evaluation> findByCollaborateurAndAnnee(@Param("collaborateurId") Long collaborateurId, @Param("annee") Integer annee);
 
     boolean existsByCollaborateurIdAndAnnee(Long collaborateurId, Integer annee);
+
+    // Méthode existante
+
+    // ✅ NOUVELLE MÉTHODE : Vérifie l'existence d'une évaluation active (non annulée)
+    boolean existsByCollaborateurIdAndAnneeAndStatutNot(
+            Long collaborateurId,
+            Integer annee,
+            StatutEvaluation statutExclu
+    );
+
+    // Alternative : Vérifier seulement certains statuts
+    boolean existsByCollaborateurIdAndAnneeAndStatutIn(
+            Long collaborateurId,
+            Integer annee,
+            List<StatutEvaluation> statuts
+    );
 }

@@ -1,6 +1,7 @@
 package com.example.notaFraisBackend.service;
 
 
+import com.example.notaFraisBackend.dto.ChangePasswordRequestDTO;
 import com.example.notaFraisBackend.dto.CollaborateurDTO;
 import com.example.notaFraisBackend.dto.CollaborateurRequestDTO;
 import com.example.notaFraisBackend.entities.entity.Collaborateur;
@@ -305,6 +306,19 @@ public class CollaborateurService {
         collaborateur.setPosteActuel(request.getPosteActuel());
         collaborateur.setRole(request.getRole());
 
+        // ✅ GESTION DE LA SIGNATURE
+        if (request.getSignature() != null && !request.getSignature().isEmpty()) {
+            // Une nouvelle signature a été fournie
+            System.out.println("📝 Mise à jour de la signature pour le collaborateur ID: " + id);
+            collaborateur.setSignature(request.getSignature());
+            collaborateur.setSignatureFilename(request.getSignatureFilename());
+            collaborateur.setSignatureContentType(request.getSignatureContentType());
+        } else {
+            // Aucune nouvelle signature = on garde l'ancienne
+            System.out.println("📝 Conservation de la signature existante pour le collaborateur ID: " + id);
+            // Ne rien faire = la signature reste inchangée
+        }
+
         // Mot de passe optionnel
         if (request.getPassword() != null && !request.getPassword().isEmpty()) {
             collaborateur.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -312,6 +326,8 @@ public class CollaborateurService {
 
         collaborateur.updateNomComplet();
         Collaborateur updated = collaborateurRepository.save(collaborateur);
+        System.out.println("✅ Collaborateur mis à jour avec signature: " +
+                (updated.getSignature() != null ? "Oui" : "Non"));
         return convertToDTO(updated);
     }
 
@@ -328,6 +344,29 @@ public class CollaborateurService {
         }
 
         collaborateur.setActif(false);
+        collaborateurRepository.save(collaborateur);
+    }
+
+    // Dans CollaborateurService.java
+    @Transactional
+    public void changePassword(Long id, ChangePasswordRequestDTO request) {
+        Collaborateur collaborateur = collaborateurRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Collaborateur non trouvé"));
+
+        Collaborateur currentUser = getCurrentUser();
+
+        // Vérifier que l'utilisateur connecté est bien celui qui change son mot de passe
+        if (!currentUser.getId().equals(id) && !currentUser.getRole().toString().equals("ADMIN")) {
+            throw new UnauthorizedException("Vous n'avez pas les droits pour changer ce mot de passe");
+        }
+
+        // Vérifier l'ancien mot de passe
+        if (!passwordEncoder.matches(request.getCurrentPassword(), collaborateur.getPassword())) {
+            throw new BadRequestException("Mot de passe actuel incorrect");
+        }
+
+        // Changer le mot de passe
+        collaborateur.setPassword(passwordEncoder.encode(request.getNewPassword()));
         collaborateurRepository.save(collaborateur);
     }
 

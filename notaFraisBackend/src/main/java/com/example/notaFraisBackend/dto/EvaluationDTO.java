@@ -64,8 +64,20 @@ public class EvaluationDTO implements Serializable {
     private String signatureResponsable;
     private String signatureCollaborateur;
 
+    private String motifRefus;
+
+    private Long refuseParId;
+    private String refuseParNom;
+
+    private LocalDate dateRefus;
     // Notes antérieures
     private List<Double> notesAnterieures;
+
+    // ✅ AJOUTER CES CHAMPS
+    private String motifAnnulation;
+    private LocalDate dateAnnulation;
+    private String annulePar; // ou un objet CollaborateurDTO
+    private Long annuleParId;
 
     // AJOUTER CES CHAMPS
     private CollaborateurDTO collaborateur;
@@ -78,6 +90,70 @@ public class EvaluationDTO implements Serializable {
     // Getters et Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
+    public String getMotifRefus() {
+        return motifRefus;
+    }
+
+    public void setMotifRefus(String motifRefus) {
+        this.motifRefus = motifRefus;
+    }
+
+    public Long getRefuseParId() {
+        return refuseParId;
+    }
+
+    public void setRefuseParId(Long refuseParId) {
+        this.refuseParId = refuseParId;
+    }
+
+    public String getRefuseParNom() {
+        return refuseParNom;
+    }
+
+    public void setRefuseParNom(String refuseParNom) {
+        this.refuseParNom = refuseParNom;
+    }
+
+    public LocalDate getDateRefus() {
+        return dateRefus;
+    }
+
+    public void setDateRefus(LocalDate dateRefus) {
+        this.dateRefus = dateRefus;
+    }
+
+    public String getMotifAnnulation() {
+        return motifAnnulation;
+    }
+
+    public void setMotifAnnulation(String motifAnnulation) {
+        this.motifAnnulation = motifAnnulation;
+    }
+
+    public LocalDate getDateAnnulation() {
+        return dateAnnulation;
+    }
+
+    public void setDateAnnulation(LocalDate dateAnnulation) {
+        this.dateAnnulation = dateAnnulation;
+    }
+
+    public String getAnnulePar() {
+        return annulePar;
+    }
+
+    public void setAnnulePar(String annulePar) {
+        this.annulePar = annulePar;
+    }
+
+    public Long getAnnuleParId() {
+        return annuleParId;
+    }
+
+    public void setAnnuleParId(Long annuleParId) {
+        this.annuleParId = annuleParId;
+    }
 
     public Integer getAnnee() { return annee; }
     public void setAnnee(Integer annee) { this.annee = annee; }

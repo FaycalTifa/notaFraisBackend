@@ -139,11 +139,33 @@ public class Evaluation implements Serializable {
     @Column(name = "commentaire_n3")
     private String commentaireN3;
 
-    @Column(name = "signature_responsable")
+    @Column(name = "signature_responsable" , columnDefinition = "TEXT")
     private String signatureResponsable;
 
-    @Column(name = "signature_collaborateur")
+    @Column(name = "signature_collaborateur" , columnDefinition = "TEXT")
     private String signatureCollaborateur;
+
+    // Ajouter après les commentaires existants
+    @Column(name = "motif_annulation", length = 1000)
+    private String motifAnnulation;
+
+    @Column(name = "date_annulation")
+    private LocalDate dateAnnulation;
+
+    @Column(name = "motif_refus", length = 1000)
+    private String motifRefus;
+
+    @Column(name = "date_refus")
+    private LocalDate dateRefus;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "annule_par_id")
+    private Collaborateur annulePar;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "refuse_par_id")
+    private Collaborateur refusePar; // Qui a fait le refus
+
 
     // Notes antérieures
     @ElementCollection
@@ -173,6 +195,54 @@ public class Evaluation implements Serializable {
 
     public void setAnnee(Integer annee) {
         this.annee = annee;
+    }
+
+    public String getMotifRefus() {
+        return motifRefus;
+    }
+
+    public Collaborateur getRefusePar() {
+        return refusePar;
+    }
+
+    public void setRefusePar(Collaborateur refusePar) {
+        this.refusePar = refusePar;
+    }
+
+    public void setMotifRefus(String motifRefus) {
+        this.motifRefus = motifRefus;
+    }
+
+    public LocalDate getDateRefus() {
+        return dateRefus;
+    }
+
+    public void setDateRefus(LocalDate dateRefus) {
+        this.dateRefus = dateRefus;
+    }
+
+    public String getMotifAnnulation() {
+        return motifAnnulation;
+    }
+
+    public void setMotifAnnulation(String motifAnnulation) {
+        this.motifAnnulation = motifAnnulation;
+    }
+
+    public LocalDate getDateAnnulation() {
+        return dateAnnulation;
+    }
+
+    public void setDateAnnulation(LocalDate dateAnnulation) {
+        this.dateAnnulation = dateAnnulation;
+    }
+
+    public Collaborateur getAnnulePar() {
+        return annulePar;
+    }
+
+    public void setAnnulePar(Collaborateur annulePar) {
+        this.annulePar = annulePar;
     }
 
     public LocalDate getDateCreation() {

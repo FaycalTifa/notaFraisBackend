@@ -17,6 +17,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -100,7 +101,19 @@ public class EvaluationService {
         dto.setDateValidation(evaluation.getDateValidation());
         dto.setStatut(evaluation.getStatut());
         dto.setDateEntretien(evaluation.getDateEntretien());
+        dto.setMotifAnnulation(evaluation.getMotifAnnulation());
+        dto.setDateAnnulation(evaluation.getDateAnnulation());
+        dto.setMotifRefus(evaluation.getMotifRefus());
+        dto.setDateRefus(evaluation.getDateRefus());
 
+        if (evaluation.getAnnulePar() != null) {
+            dto.setAnnulePar(evaluation.getAnnulePar().getNomComplet());
+            dto.setAnnuleParId(evaluation.getAnnulePar().getId());
+        }
+        if (evaluation.getRefusePar() != null) {
+            dto.setRefuseParId(evaluation.getRefusePar().getId());
+            dto.setRefuseParNom(evaluation.getRefusePar().getNomComplet());
+        }
         // Collaborateur
         if (evaluation.getCollaborateur() != null) {
             CollaborateurDTO collabDTO = new CollaborateurDTO();
@@ -278,6 +291,10 @@ if (evaluation.getFaitsMarquants() != null) {
     // =============================================
     // CRÉATION
     // =============================================
+
+    // =============================================
+// CRÉATION CORRIGÉE - Version finale
+// =============================================
     @Transactional
     public EvaluationDTO createEvaluation(EvaluationRequestDTO request) {
         Collaborateur currentUser = getCurrentUser();
@@ -288,10 +305,29 @@ if (evaluation.getFaitsMarquants() != null) {
             throw new UnauthorizedException("Vous n'avez pas le droit d'évaluer ce collaborateur");
         }
 
-        if (evaluationRepository.existsByCollaborateurIdAndAnnee(collaborateur.getId(), request.getAnnee())) {
-            throw new BadRequestException("Une évaluation existe déjà pour ce collaborateur en " + request.getAnnee());
+        // ✅ Vérifier s'il existe UNE ÉVALUATION ACTIVE (non annulée)
+        // Liste des statuts qui empêchent la création d'une nouvelle évaluation
+        List<StatutEvaluation> statutsActifs = Arrays.asList(
+                StatutEvaluation.BROUILLON,
+                StatutEvaluation.A_APPROUVER,
+                StatutEvaluation.APPROUVEE,
+                StatutEvaluation.A_VALIDER_SERVICE,
+                StatutEvaluation.A_VALIDER_DIRECTEUR,
+                StatutEvaluation.VALIDEE
+        );
+
+        boolean existeEvaluationActive = evaluationRepository
+                .existsByCollaborateurIdAndAnneeAndStatutIn(
+                        collaborateur.getId(),
+                        request.getAnnee(),
+                        statutsActifs
+                );
+
+        if (existeEvaluationActive) {
+            throw new BadRequestException("Une évaluation active existe déjà pour ce collaborateur en " + request.getAnnee());
         }
 
+        // ✅ CRÉATION DE LA NOUVELLE ÉVALUATION
         Evaluation evaluation = new Evaluation();
         evaluation.setAnnee(request.getAnnee());
         evaluation.setDateCreation(LocalDate.now());
@@ -302,15 +338,12 @@ if (evaluation.getFaitsMarquants() != null) {
 
         // Gestion des faits marquants
         if (request.getFaitsMarquants() != null) {
-            // Supprimer les anciens
-            evaluation.getFaitsMarquants().clear();
-
-            // Ajouter les nouveaux
             for (FaitMarquantDTO fmDTO : request.getFaitsMarquants()) {
                 FaitMarquant fait = convertDTOToFaitMarquant(fmDTO, evaluation);
                 evaluation.getFaitsMarquants().add(fait);
             }
         }
+
         Evaluation savedEvaluation = evaluationRepository.save(evaluation);
 
         // Ajouter les objectifs
@@ -326,6 +359,39 @@ if (evaluation.getFaitsMarquants() != null) {
                     objectif.setEvaluation(savedEvaluation);
                     objectifRepository.save(objectif);
                     savedEvaluation.getObjectifs().add(objectif);
+                }
+            }
+        }
+
+        // Ajouter les objectifs futurs
+        if (request.getObjectifsFuturs() != null) {
+            for (ObjectifFuturDTO objDTO : request.getObjectifsFuturs()) {
+                if (objDTO.getLibelle() != null && !objDTO.getLibelle().trim().isEmpty()) {
+                    ObjectifFutur objectif = new ObjectifFutur();
+                    objectif.setLibelle(objDTO.getLibelle());
+                    objectif.setPlanAction(objDTO.getPlanAction());
+                    objectif.setMoyens(objDTO.getMoyens());
+                    objectif.setIndicateursSuivi(objDTO.getIndicateursSuivi());
+                    objectif.setType(objDTO.getType());
+                    objectif.setEvaluation(savedEvaluation);
+                    objectifFuturRepository.save(objectif);
+                    savedEvaluation.getObjectifsFuturs().add(objectif);
+                }
+            }
+        }
+
+        // Ajouter les formations
+        if (request.getSouhaitsFormations() != null) {
+            for (SouhaitFormationDTO formDTO : request.getSouhaitsFormations()) {
+                if (formDTO.getTheme() != null && !formDTO.getTheme().trim().isEmpty()) {
+                    SouhaitFormation formation = new SouhaitFormation();
+                    formation.setTheme(formDTO.getTheme());
+                    formation.setObjectifs(formDTO.getObjectifs());
+                    formation.setResultatsAttendus(formDTO.getResultatsAttendus());
+                    formation.setDelaisEvaluation(formDTO.getDelaisEvaluation());
+                    formation.setEvaluation(savedEvaluation);
+                    formationRepository.save(formation);
+                    savedEvaluation.getSouhaitsFormations().add(formation);
                 }
             }
         }
@@ -584,6 +650,8 @@ if (evaluation.getFaitsMarquants() != null) {
         return convertToDTO(evaluationRepository.save(evaluation));
     }
 
+    // Dans EvaluationService.java - méthode signerEvaluation
+    @Transactional
     public EvaluationDTO signerEvaluation(Long id, String signature, boolean isResponsable) {
         Evaluation evaluation = evaluationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Évaluation non trouvée"));
@@ -594,12 +662,17 @@ if (evaluation.getFaitsMarquants() != null) {
             evaluation.setSignatureCollaborateur(signature);
         }
 
+        // Si les deux signatures sont présentes, on valide l'évaluation
         if (evaluation.getSignatureResponsable() != null && evaluation.getSignatureCollaborateur() != null) {
             evaluation.setStatut(StatutEvaluation.VALIDEE);
-            evaluation.setDateValidation(LocalDate.now());
+            evaluation.setDateValidation(LocalDate.now()); // ✅ La date est set ici
+            System.out.println("📅 Date validation set: " + LocalDate.now());
         }
 
-        return convertToDTO(evaluationRepository.save(evaluation));
+        Evaluation saved = evaluationRepository.save(evaluation);
+        System.out.println("✅ Signature sauvegardée, dateValidation = " + saved.getDateValidation());
+
+        return convertToDTO(saved);
     }
 
     public List<EvaluationDTO> getAllEvaluations() {
@@ -609,6 +682,7 @@ if (evaluation.getFaitsMarquants() != null) {
         switch (currentUser.getRole().toString()) {
             case "ADMIN":
                 evaluations = evaluationRepository.findAll();
+                System.out.println("📊 ADMIN - Évaluations trouvées: " + evaluations.size());
                 break;
             case "DIRECTEUR":
                 if (currentUser.getDirection() != null) {
@@ -634,6 +708,10 @@ if (evaluation.getFaitsMarquants() != null) {
             default:
                 evaluations = evaluationRepository.findByCollaborateurId(currentUser.getId());
         }
+
+      /*  return evaluations.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());*/
 
         return evaluations.stream()
                 .map(this::convertToDTO)
@@ -696,6 +774,8 @@ if (evaluation.getFaitsMarquants() != null) {
                     return dto;
                 })
                 .collect(Collectors.toList());
+
+
     }
 
     // =============================================
@@ -743,19 +823,52 @@ if (evaluation.getFaitsMarquants() != null) {
         return convertToDTO(evaluationRepository.save(evaluation));
     }
 
-    public EvaluationDTO refuserEvaluation(Long id, String motif) {
+    // Dans EvaluationService.java
+
+// Dans EvaluationService.java
+
+    /**
+     * Refuser une évaluation avec motif
+     * @param id ID de l'évaluation
+     * @param motifRefus Motif du refus
+     * @return Évaluation mise à jour
+     */
+    @Transactional
+    public EvaluationDTO refuserEvaluation(Long id, String motifRefus) {
+        // 1. Récupérer l'évaluation
         Evaluation evaluation = evaluationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Évaluation non trouvée"));
 
+        // 2. Récupérer l'utilisateur connecté (celui qui refuse)
         Collaborateur currentUser = getCurrentUser();
         Collaborateur collaborateur = evaluation.getCollaborateur();
 
+        // 3. Vérifier que c'est bien le collaborateur évalué qui refuse
         if (!currentUser.getId().equals(collaborateur.getId())) {
             throw new UnauthorizedException("Seul le collaborateur évalué peut refuser l'évaluation");
         }
 
-        evaluation.setCommentaireCollaborateur(motif);
+        // 4. Vérifier que le motif n'est pas vide
+        if (motifRefus == null || motifRefus.trim().isEmpty()) {
+            throw new BadRequestException("Le motif du refus est obligatoire");
+        }
+
+        // 5. ✅ Sauvegarder TOUTES les informations de refus
+        evaluation.setMotifRefus(motifRefus);
+        evaluation.setDateRefus(LocalDate.now());
+        evaluation.setRefusePar(currentUser); // Enregistrer qui a refusé
+
+        // 6. Ajouter aussi dans le commentaire pour l'historique (optionnel)
+        String commentaireRefus = "❌ Évaluation REFUSÉE par " + currentUser.getNomComplet() +
+                " le " + LocalDate.now() +
+                ". Motif: " + motifRefus;
+        evaluation.setCommentaireCollaborateur(commentaireRefus);
+
+        // 7. Changer le statut (remettre en brouillon)
         evaluation.setStatut(StatutEvaluation.BROUILLON);
+
+        System.out.println("✅ Évaluation refusée par: " + currentUser.getNomComplet() +
+                " - Motif: " + motifRefus);
 
         return convertToDTO(evaluationRepository.save(evaluation));
     }
@@ -826,4 +939,183 @@ if (evaluation.getFaitsMarquants() != null) {
 
         return convertToDTO(evaluationRepository.save(evaluation));
     }
+
+
+// =============================================
+// ANNULATION D'UNE ÉVALUATION
+// =============================================
+    /**
+     * Annuler une évaluation avec contrôle des droits
+     * @param id ID de l'évaluation
+     * @param motif Motif de l'annulation
+     * @return Évaluation mise à jour
+     */
+    @Transactional
+    public EvaluationDTO annulerEvaluation(Long id, String motif) {
+        // 1. Récupérer l'évaluation
+        Evaluation evaluation = evaluationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Évaluation non trouvée avec l'id: " + id));
+
+        // 2. Récupérer l'utilisateur connecté
+        Collaborateur currentUser = getCurrentUser();
+
+        // 3. Vérifier les droits d'annulation
+        boolean peutAnnuler = false;
+        String erreurMessage = "";
+
+        // CAS 1: ADMIN - Peut annuler TOUJOURS
+        if (currentUser.getRole().toString().equals("ADMIN")) {
+            peutAnnuler = true;
+            System.out.println("✅ ADMIN autorisé à annuler");
+        }
+
+        // CAS 2: DIRECTEUR - Peut annuler SEULEMENT avant validation
+        else if (currentUser.getRole().toString().equals("DIRECTEUR")) {
+            if (evaluation.getStatut() == StatutEvaluation.VALIDEE) {
+                erreurMessage = "Un directeur ne peut pas annuler une évaluation déjà validée";
+                System.out.println("❌ DIRECTEUR - Évaluation déjà validée: " + evaluation.getStatut());
+            } else {
+                // Vérifier que le collaborateur est dans sa direction
+                boolean memeDirection = currentUser.getDirection() != null &&
+                        evaluation.getCollaborateur().getDirection() != null &&
+                        currentUser.getDirection().getId().equals(evaluation.getCollaborateur().getDirection().getId());
+
+                if (memeDirection) {
+                    peutAnnuler = true;
+                    System.out.println("✅ DIRECTEUR autorisé à annuler (même direction)");
+                } else {
+                    erreurMessage = "Vous ne pouvez annuler que les évaluations des collaborateurs de votre direction";
+                    System.out.println("❌ DIRECTEUR - Pas la même direction");
+                }
+            }
+        }
+
+        // CAS 3: Autres rôles - Interdit
+        else {
+            erreurMessage = "Vous n'avez pas les droits pour annuler cette évaluation";
+            System.out.println("❌ Rôle non autorisé: " + currentUser.getRole());
+        }
+
+        if (!peutAnnuler) {
+            throw new UnauthorizedException(erreurMessage);
+        }
+
+        // 4. Vérifier que le motif n'est pas vide
+        if (motif == null || motif.trim().isEmpty()) {
+            throw new BadRequestException("Le motif d'annulation est obligatoire");
+        }
+
+        // 5. Enregistrer l'annulation
+        StatutEvaluation ancienStatut = evaluation.getStatut();
+        evaluation.setStatut(StatutEvaluation.ANNULEE);
+        evaluation.setMotifAnnulation(motif);
+        evaluation.setDateAnnulation(LocalDate.now());
+        evaluation.setAnnulePar(currentUser);
+
+        // 6. Ajouter le motif dans les commentaires si c'est pertinent
+        String commentaireAnnulation = "Évaluation annulée par " + currentUser.getNomComplet() +
+                " le " + LocalDate.now() +
+                ". Motif: " + motif +
+                " (Ancien statut: " + ancienStatut + ")";
+
+        // Ajouter au commentaire approprié selon le rôle
+        if (currentUser.getRole().toString().equals("DIRECTEUR")) {
+            evaluation.setCommentaireN3(commentaireAnnulation);
+        } else {
+            // Pour ADMIN, on peut choisir où mettre le commentaire
+            evaluation.setCommentaireN2(commentaireAnnulation);
+        }
+
+        // 7. Sauvegarder
+        Evaluation saved = evaluationRepository.save(evaluation);
+        System.out.println("✅ Évaluation annulée avec succès");
+
+        // 8. Convertir et retourner
+        return convertToDTO(saved);
+    }
+
+    /**
+     * Retourner une évaluation pour modification avec motif
+     * @param id ID de l'évaluation
+     * @param motif Motif du retour
+     * @return Évaluation mise à jour
+     */
+    @Transactional
+    public EvaluationDTO retournerPourModification(Long id, String motif) {
+        Evaluation evaluation = evaluationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Évaluation non trouvée"));
+
+        Collaborateur currentUser = getCurrentUser();
+
+        // Vérifier les droits
+        boolean aLesDroits = currentUser.getRole().toString().equals("ADMIN") ||
+                currentUser.getRole().toString().equals("DIRECTEUR") ||
+                (currentUser.getRole().toString().equals("CHEF_SERVICE") &&
+                        evaluation.getEvaluateur().getService() != null &&
+                        currentUser.getService() != null &&
+                        currentUser.getService().getId().equals(evaluation.getEvaluateur().getService().getId()));
+
+        if (!aLesDroits) {
+            throw new UnauthorizedException("Vous n'avez pas les droits pour retourner cette évaluation");
+        }
+
+        // Vérifier le motif
+        if (motif == null || motif.trim().isEmpty()) {
+            throw new BadRequestException("Le motif du retour est obligatoire");
+        }
+
+        // Sauvegarder l'ancien statut
+        StatutEvaluation ancienStatut = evaluation.getStatut();
+
+        // Mettre à jour
+        evaluation.setStatut(StatutEvaluation.BROUILLON);
+
+        // Ajouter le motif dans les commentaires
+        String commentaireRetour = "Retournée pour modification par " + currentUser.getNomComplet() +
+                " le " + LocalDate.now() +
+                ". Motif: " + motif;
+
+        if (currentUser.getRole().toString().equals("DIRECTEUR")) {
+            evaluation.setCommentaireN3(commentaireRetour);
+        } else if (currentUser.getRole().toString().equals("CHEF_SERVICE")) {
+            evaluation.setCommentaireN2(commentaireRetour);
+        } else {
+            evaluation.setCommentaireResponsable(commentaireRetour);
+        }
+
+        return convertToDTO(evaluationRepository.save(evaluation));
+    }
+
+    @Transactional
+    public EvaluationDTO reactiverEvaluation(Long id) {
+        Evaluation evaluation = evaluationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Évaluation non trouvée avec l'id: " + id));
+
+        Collaborateur currentUser = getCurrentUser();
+
+        // Seul l'ADMIN peut réactiver
+        if (!currentUser.getRole().toString().equals("ADMIN")) {
+            throw new UnauthorizedException("Seul l'administrateur peut réactiver une évaluation");
+        }
+
+        // Vérifier que l'évaluation est bien annulée
+        if (evaluation.getStatut() != StatutEvaluation.ANNULEE) {
+            throw new BadRequestException("Seules les évaluations annulées peuvent être réactivées");
+        }
+
+        // Remettre le statut à BROUILLON
+        evaluation.setStatut(StatutEvaluation.BROUILLON);
+        evaluation.setMotifAnnulation(null);
+        evaluation.setDateAnnulation(null);
+        evaluation.setAnnulePar(null);
+
+        evaluation.setCommentaireN2("Évaluation réactivée par " + currentUser.getNomComplet() +
+                " le " + LocalDate.now());
+
+        return convertToDTO(evaluationRepository.save(evaluation));
+    }
+
+
+
+
 }

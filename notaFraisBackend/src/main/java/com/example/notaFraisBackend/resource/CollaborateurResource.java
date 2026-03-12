@@ -1,8 +1,10 @@
 package com.example.notaFraisBackend.resource;
 
 
+import com.example.notaFraisBackend.dto.ChangePasswordRequestDTO;
 import com.example.notaFraisBackend.dto.CollaborateurDTO;
 import com.example.notaFraisBackend.dto.CollaborateurRequestDTO;
+import com.example.notaFraisBackend.dto.PasswordChangeResponseDTO;
 import com.example.notaFraisBackend.entities.entity.Collaborateur;
 import com.example.notaFraisBackend.entities.enume.Role;
 import com.example.notaFraisBackend.repository.CollaborateurRepository;
@@ -89,4 +91,28 @@ public class CollaborateurResource {
     public ResponseEntity<List<CollaborateurDTO>> rechercherCollaborateurs(@RequestParam String search) {
         return ResponseEntity.ok(collaborateurService.rechercherCollaborateurs(search));
     }
+
+    /**
+     * Changer le mot de passe d'un collaborateur
+     * @param id ID du collaborateur
+     * @param request DTO contenant l'ancien et le nouveau mot de passe
+     * @return ResponseEntity avec message de succès
+     */
+    @PostMapping("/{id}/change-password")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTEUR', 'CHEF_SERVICE', 'CHEF_SECTION', 'COLLABORATEUR')")
+    public ResponseEntity<?> changePassword(
+            @PathVariable Long id,
+            @Valid @RequestBody ChangePasswordRequestDTO request) {
+
+        try {
+            collaborateurService.changePassword(id, request);
+            return ResponseEntity.ok()
+                    .body(new PasswordChangeResponseDTO("Mot de passe modifié avec succès"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new PasswordChangeResponseDTO(e.getMessage()));
+        }
+    }
+
+
 }

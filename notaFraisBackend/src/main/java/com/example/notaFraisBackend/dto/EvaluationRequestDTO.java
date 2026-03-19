@@ -1,5 +1,6 @@
 package com.example.notaFraisBackend.dto;
 
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
@@ -45,6 +46,7 @@ public class EvaluationRequestDTO implements Serializable {
     private String commentaireN3;
 
     private List<FaitMarquantDTO> faitsMarquants;
+
 
     // Getter et Setter
 

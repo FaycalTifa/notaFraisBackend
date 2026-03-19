@@ -33,7 +33,7 @@ public class CollaborateurResource {
     private CollaborateurService collaborateurService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTEUR', 'CHEF_SERVICE', 'CHEF_SECTION')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTEUR', 'CHEF_SERVICE', 'CHEF_SECTION', 'COLLABORATEUR')")
     public ResponseEntity<List<CollaborateurDTO>> getAllCollaborateurs() {
         return ResponseEntity.ok(collaborateurService.getAllCollaborateurs());
     }
@@ -87,7 +87,7 @@ public class CollaborateurResource {
     }
 
     @GetMapping("/recherche")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTEUR', 'CHEF_SERVICE', 'CHEF_SECTION')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTEUR', 'CHEF_SERVICE', 'CHEF_SECTION', 'COLLABORATEUR')")
     public ResponseEntity<List<CollaborateurDTO>> rechercherCollaborateurs(@RequestParam String search) {
         return ResponseEntity.ok(collaborateurService.rechercherCollaborateurs(search));
     }

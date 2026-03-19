@@ -40,6 +40,8 @@ public class Collaborateur implements Serializable {
     @Column(name = "email")
     private String email;
 
+
+
     @JsonIgnore
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column(name = "password")
@@ -175,6 +177,8 @@ public class Collaborateur implements Serializable {
     // Getters et Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
+
 
     public String getNom() { return nom; }
     public void setNom(String nom) { this.nom = nom; }

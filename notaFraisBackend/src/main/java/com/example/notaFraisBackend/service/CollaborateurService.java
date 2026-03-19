@@ -130,6 +130,8 @@ public class CollaborateurService {
         dto.setNomComplet(collaborateur.getNomComplet());
         dto.setMatricule(collaborateur.getMatricule());
         dto.setPosteActuel(collaborateur.getPosteActuel());
+        dto.setEmail(collaborateur.getEmail());
+        dto.setTelephone(collaborateur.getTelephone());
         dto.setRole(collaborateur.getRole());
         // ✅ AJOUTER LA SIGNATURE
         dto.setSignature(collaborateur.getSignature());

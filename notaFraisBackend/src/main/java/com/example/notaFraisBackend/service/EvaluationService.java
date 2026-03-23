@@ -105,6 +105,11 @@ public class EvaluationService {
         dto.setDateAnnulation(evaluation.getDateAnnulation());
         dto.setMotifRefus(evaluation.getMotifRefus());
         dto.setDateRefus(evaluation.getDateRefus());
+        dto.setSignatureResponsableBoolean(evaluation.getSignatureResponsableBoolean());
+        dto.setSignatureCollaborateurBoolean(evaluation.getSignatureCollaborateurBoolean());
+        dto.setDateSignatureResponsable(evaluation.getDateSignatureResponsable());
+        dto.setDateSignatureCollaborateur(evaluation.getDateSignatureCollaborateur());
+
 
         if (evaluation.getAnnulePar() != null) {
             dto.setAnnulePar(evaluation.getAnnulePar().getNomComplet());
@@ -652,26 +657,28 @@ if (evaluation.getFaitsMarquants() != null) {
 
     // Dans EvaluationService.java - méthode signerEvaluation
     @Transactional
-    public EvaluationDTO signerEvaluation(Long id, String signature, boolean isResponsable) {
+    public EvaluationDTO signerEvaluation(Long id, boolean isResponsable) {
         Evaluation evaluation = evaluationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Évaluation non trouvée"));
 
+        LocalDate maintenant = LocalDate.now();
+
         if (isResponsable) {
-            evaluation.setSignatureResponsable(signature);
+            evaluation.setSignatureResponsableBoolean(true);
+            evaluation.setDateSignatureResponsable(maintenant);
         } else {
-            evaluation.setSignatureCollaborateur(signature);
+            evaluation.setSignatureCollaborateurBoolean(true);
+            evaluation.setDateSignatureCollaborateur(maintenant);
         }
 
         // Si les deux signatures sont présentes, on valide l'évaluation
-        if (evaluation.getSignatureResponsable() != null && evaluation.getSignatureCollaborateur() != null) {
+        if (Boolean.TRUE.equals(evaluation.getSignatureResponsable()) &&
+                Boolean.TRUE.equals(evaluation.getSignatureCollaborateur())) {
             evaluation.setStatut(StatutEvaluation.VALIDEE);
-            evaluation.setDateValidation(LocalDate.now()); // ✅ La date est set ici
-            System.out.println("📅 Date validation set: " + LocalDate.now());
+            evaluation.setDateValidation(LocalDate.now());
         }
 
         Evaluation saved = evaluationRepository.save(evaluation);
-        System.out.println("✅ Signature sauvegardée, dateValidation = " + saved.getDateValidation());
-
         return convertToDTO(saved);
     }
 

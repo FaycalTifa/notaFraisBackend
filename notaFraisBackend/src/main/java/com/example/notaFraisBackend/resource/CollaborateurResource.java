@@ -114,5 +114,14 @@ public class CollaborateurResource {
         }
     }
 
+    // Dans CollaborateurResource.java
+
+    @GetMapping("/{id}/signature")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<String> getCollaborateurSignature(@PathVariable Long id) {
+        String signature = collaborateurService.getCollaborateurSignature(id);
+        return ResponseEntity.ok(signature != null ? signature : "");
+    }
+
 
 }

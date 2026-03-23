@@ -155,6 +155,18 @@ public class Evaluation implements Serializable {
     @Column(name = "motif_refus", length = 1000)
     private String motifRefus;
 
+    @Column(name = "signature_responsableBoolean")
+    private Boolean signatureResponsableBoolean = false;  // boolean au lieu de String
+
+    @Column(name = "signature_collaborateurBoolean")
+    private Boolean signatureCollaborateurBoolean = false;
+
+    @Column(name = "date_signature_responsable")
+    private LocalDate dateSignatureResponsable;
+
+    @Column(name = "date_signature_collaborateur")
+    private LocalDate dateSignatureCollaborateur;
+
     @Column(name = "date_refus")
     private LocalDate dateRefus;
 
@@ -219,6 +231,22 @@ public class Evaluation implements Serializable {
 
     public void setDateRefus(LocalDate dateRefus) {
         this.dateRefus = dateRefus;
+    }
+
+    public LocalDate getDateSignatureResponsable() {
+        return dateSignatureResponsable;
+    }
+
+    public void setDateSignatureResponsable(LocalDate dateSignatureResponsable) {
+        this.dateSignatureResponsable = dateSignatureResponsable;
+    }
+
+    public LocalDate getDateSignatureCollaborateur() {
+        return dateSignatureCollaborateur;
+    }
+
+    public void setDateSignatureCollaborateur(LocalDate dateSignatureCollaborateur) {
+        this.dateSignatureCollaborateur = dateSignatureCollaborateur;
     }
 
     public String getMotifAnnulation() {
@@ -293,14 +321,21 @@ public class Evaluation implements Serializable {
         this.evaluateur = evaluateur;
     }
 
-   /* public List<String> getFaitsMarquants() {
-        return faitsMarquants;
+    public Boolean getSignatureResponsableBoolean() {
+        return signatureResponsableBoolean;
     }
 
-    public void setFaitsMarquants(List<String> faitsMarquants) {
-        this.faitsMarquants = faitsMarquants;
+    public void setSignatureResponsableBoolean(Boolean signatureResponsableBoolean) {
+        this.signatureResponsableBoolean = signatureResponsableBoolean;
     }
-*/
+
+    public Boolean getSignatureCollaborateurBoolean() {
+        return signatureCollaborateurBoolean;
+    }
+
+    public void setSignatureCollaborateurBoolean(Boolean signatureCollaborateurBoolean) {
+        this.signatureCollaborateurBoolean = signatureCollaborateurBoolean;
+    }
 
     public List<FaitMarquant> getFaitsMarquants() {
         return faitsMarquants;

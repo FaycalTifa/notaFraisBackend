@@ -63,7 +63,13 @@ public class EvaluationDTO implements Serializable {
     private String commentaireN3;
     private String signatureResponsable;
     private String signatureCollaborateur;
+    // ✅ PAR CELLES-CI
+    private Boolean signatureResponsableBoolean = false;  // Boolean au lieu de String
+    private Boolean signatureCollaborateurBoolean = false;
 
+    // ✅ AJOUTEZ CES NOUVEAUX CHAMPS POUR LES DATES
+    private LocalDate dateSignatureResponsable;
+    private LocalDate dateSignatureCollaborateur;
     private String motifRefus;
 
     private Long refuseParId;
@@ -85,6 +91,38 @@ public class EvaluationDTO implements Serializable {
 
     public EvaluationDTO() {
 
+    }
+
+    public Boolean getSignatureResponsableBoolean() {
+        return signatureResponsableBoolean;
+    }
+
+    public void setSignatureResponsableBoolean(Boolean signatureResponsableBoolean) {
+        this.signatureResponsableBoolean = signatureResponsableBoolean;
+    }
+
+    public Boolean getSignatureCollaborateurBoolean() {
+        return signatureCollaborateurBoolean;
+    }
+
+    public void setSignatureCollaborateurBoolean(Boolean signatureCollaborateurBoolean) {
+        this.signatureCollaborateurBoolean = signatureCollaborateurBoolean;
+    }
+
+    public LocalDate getDateSignatureResponsable() {
+        return dateSignatureResponsable;
+    }
+
+    public void setDateSignatureResponsable(LocalDate dateSignatureResponsable) {
+        this.dateSignatureResponsable = dateSignatureResponsable;
+    }
+
+    public LocalDate getDateSignatureCollaborateur() {
+        return dateSignatureCollaborateur;
+    }
+
+    public void setDateSignatureCollaborateur(LocalDate dateSignatureCollaborateur) {
+        this.dateSignatureCollaborateur = dateSignatureCollaborateur;
     }
 
     // Getters et Setters

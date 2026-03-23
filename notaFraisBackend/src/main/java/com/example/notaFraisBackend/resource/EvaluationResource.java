@@ -113,9 +113,8 @@ public class EvaluationResource {
     @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTEUR', 'CHEF_SERVICE', 'CHEF_SECTION', 'COLLABORATEUR')")
     public ResponseEntity<EvaluationDTO> signerEvaluation(
             @PathVariable Long id,
-            @RequestParam String signature,
-            @RequestParam boolean isResponsable) {
-        return ResponseEntity.ok(evaluationService.signerEvaluation(id, signature, isResponsable));
+            @RequestBody SignatureRequestDTO request) {
+        return ResponseEntity.ok(evaluationService.signerEvaluation(id, request.isResponsable()));
     }
 
     @DeleteMapping("/{id}")

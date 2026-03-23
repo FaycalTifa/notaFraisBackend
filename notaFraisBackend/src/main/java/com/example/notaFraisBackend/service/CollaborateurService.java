@@ -411,4 +411,12 @@ public class CollaborateurService {
                 return List.of();
         }
     }
+
+    // Dans CollaborateurService.java
+
+    public String getCollaborateurSignature(Long id) {
+        Collaborateur collaborateur = collaborateurRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Collaborateur non trouvé"));
+        return collaborateur.getSignature();
+    }
 }

@@ -1,6 +1,5 @@
 package com.example.notaFraisBackend.dto;
 
-import com.example.notaFraisBackend.entities.entity.Collaborateur;
 import com.example.notaFraisBackend.entities.enume.Role;
 
 import javax.validation.constraints.Email;

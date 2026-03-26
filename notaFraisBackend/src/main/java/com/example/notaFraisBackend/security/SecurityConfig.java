@@ -50,6 +50,7 @@ public class SecurityConfig {
         // SOLUTION 1: Spécifier les origines exactes (recommandé)
         configuration.setAllowedOrigins(Arrays.asList(
                 "http://localhost:4200",  // Angular dev server
+                "http://192.168.10.179",
                 "http://localhost:8080"    // Backend
         ));
 
